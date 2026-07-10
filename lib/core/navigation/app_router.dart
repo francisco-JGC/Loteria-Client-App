@@ -1,5 +1,8 @@
 import 'package:go_router/go_router.dart';
 
+import '../../features/games/domain/entities/game.dart';
+import '../../features/games/presentation/screens/game_detail_page.dart';
+import '../../features/games/presentation/screens/games_page.dart';
 import '../widgets/placeholder_page.dart';
 import 'app_shell.dart';
 
@@ -12,7 +15,7 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: '/juegos',
           pageBuilder: (context, state) => const NoTransitionPage(
-            child: PlaceholderPage(title: 'Juegos'),
+            child: GamesPage(),
           ),
         ),
         GoRoute(
@@ -64,6 +67,13 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
       ],
+    ),
+    GoRoute(
+      path: '/juegos/:gameId',
+      builder: (context, state) => GameDetailPage(
+        gameId: state.pathParameters['gameId']!,
+        game: state.extra as Game?,
+      ),
     ),
   ],
 );
