@@ -6,6 +6,13 @@ import '../../features/games/data/datasources/games_local_datasource.dart';
 import '../../features/games/data/repositories/games_repository_impl.dart';
 import '../../features/games/domain/repositories/games_repository.dart';
 import '../../features/games/domain/usecases/get_authorized_games.dart';
+import '../../features/printer/data/datasources/printer_bluetooth_datasource.dart';
+import '../../features/printer/data/repositories/printer_repository_impl.dart';
+import '../../features/printer/domain/repositories/printer_repository.dart';
+import '../../features/printer/domain/usecases/connect_printer.dart';
+import '../../features/printer/domain/usecases/disconnect_printer.dart';
+import '../../features/printer/domain/usecases/get_paired_printers.dart';
+import '../../features/printer/domain/usecases/print_test.dart';
 import '../../features/settings/data/datasources/settings_local_datasource.dart';
 import '../../features/settings/data/repositories/settings_repository_impl.dart';
 import '../../features/settings/domain/repositories/settings_repository.dart';
@@ -25,6 +32,7 @@ Future<void> configureDependencies() async {
 
   _registerGamesFeature();
   _registerSettingsFeature();
+  _registerPrinterFeature();
 }
 
 void _registerGamesFeature() {
@@ -53,5 +61,27 @@ void _registerSettingsFeature() {
     )
     ..registerFactory<SetBillingMethod>(
       () => SetBillingMethod(repository: getIt()),
+    );
+}
+
+void _registerPrinterFeature() {
+  getIt
+    ..registerLazySingleton<PrinterBluetoothDatasource>(
+      PrinterBluetoothDatasourceImpl.new,
+    )
+    ..registerLazySingleton<PrinterRepository>(
+      () => PrinterRepositoryImpl(datasource: getIt()),
+    )
+    ..registerFactory<GetPairedPrinters>(
+      () => GetPairedPrinters(repository: getIt()),
+    )
+    ..registerFactory<ConnectPrinter>(
+      () => ConnectPrinter(repository: getIt()),
+    )
+    ..registerFactory<DisconnectPrinter>(
+      () => DisconnectPrinter(repository: getIt()),
+    )
+    ..registerFactory<PrintTest>(
+      () => PrintTest(repository: getIt()),
     );
 }

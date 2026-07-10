@@ -10,6 +10,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   dio: ^5.10.0
   equatable: ^2.1.0
+  esc_pos_utils_plus: ^2.0.4
   flutter:
     sdk: flutter
   flutter_dotenv: ^6.0.1
@@ -21,6 +22,8 @@ dependencies:
   intl: ^0.20.3
   json_annotation: ^4.12.0
   logger: ^2.7.0
+  permission_handler: ^12.0.3
+  print_bluetooth_thermal: ^1.2.2
   riverpod_annotation: ^4.0.3
   shared_preferences: ^2.5.5
 
