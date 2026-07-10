@@ -35,6 +35,10 @@ class CartController extends Notifier<CartState> {
     state = CartState(bets: [...state.bets, ...newBets]);
   }
 
+  void addBets(List<Bet> bets) {
+    state = CartState(bets: [...state.bets, ...bets]);
+  }
+
   void removeAt(int index) {
     final bets = [...state.bets]..removeAt(index);
     state = CartState(bets: bets);

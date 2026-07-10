@@ -22,6 +22,7 @@ dependencies:
   intl: ^0.20.3
   json_annotation: ^4.12.0
   logger: ^2.7.0
+  mobile_scanner: ^7.2.0
   permission_handler: ^12.0.3
   print_bluetooth_thermal: ^1.2.2
   riverpod_annotation: ^4.0.3

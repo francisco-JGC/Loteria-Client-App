@@ -8,6 +8,8 @@
 	<string>La app usa Bluetooth para conectarse a la impresora térmica.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>La app usa Bluetooth para conectarse a la impresora térmica.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>La app usa la cámara para escanear boletos con código QR.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/session/current_user.dart';
 import '../../../../core/utils/currency.dart';
@@ -45,6 +46,12 @@ class GameDetailPage extends ConsumerWidget {
             icon: const Icon(Icons.casino_outlined),
             tooltip: 'Registrar aleatorio',
             onPressed: () => _openRandomForm(context, controller),
+          ),
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner),
+            tooltip: 'Escanear boleto',
+            onPressed: () =>
+                context.push('/juegos/${resolved.id}/escanear'),
           ),
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
@@ -159,6 +166,7 @@ class GameDetailPage extends ConsumerWidget {
 
     final user = ref.read(currentUserProvider);
     final payload = TicketPayload(
+      gameId: game.id,
       gameName: game.name,
       lines: cart.bets
           .map((b) => TicketLine(

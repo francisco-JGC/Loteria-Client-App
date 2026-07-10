@@ -4,6 +4,7 @@ import '../../features/games/domain/entities/game.dart';
 import '../../features/games/presentation/screens/game_detail_page.dart';
 import '../../features/games/presentation/screens/games_page.dart';
 import '../../features/printer/presentation/screens/printer_setup_page.dart';
+import '../../features/sales/presentation/screens/scan_ticket_page.dart';
 import '../../features/settings/presentation/screens/settings_page.dart';
 import '../widgets/placeholder_page.dart';
 import 'app_shell.dart';
@@ -76,6 +77,14 @@ final GoRouter appRouter = GoRouter(
         gameId: state.pathParameters['gameId']!,
         game: state.extra as Game?,
       ),
+      routes: [
+        GoRoute(
+          path: 'escanear',
+          builder: (context, state) => ScanTicketPage(
+            gameId: state.pathParameters['gameId']!,
+          ),
+        ),
+      ],
     ),
     GoRoute(
       path: '/configuracion',

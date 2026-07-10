@@ -102,9 +102,17 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
     final dateFmt = DateFormat('yyyy-MM-dd HH:mm');
     final money = kCurrencyFormat;
 
+    const bodyStyle = PosStyles(bold: true, height: PosTextSize.size2);
+    const rightBodyStyle = PosStyles(
+      bold: true,
+      height: PosTextSize.size2,
+      align: PosAlign.right,
+    );
+    PosColumn gutter() => PosColumn(text: '', width: 1);
+
     return [
       ...g.text(
-        'LOTERIA',
+        '  LOTERIA  ',
         styles: const PosStyles(
           align: PosAlign.center,
           height: PosTextSize.size2,
@@ -113,83 +121,95 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
         ),
       ),
       ...g.text(
-        p.gameName,
-        styles: const PosStyles(align: PosAlign.center, bold: true),
+        '  ${p.gameName}  ',
+        styles: const PosStyles(
+          align: PosAlign.center,
+          bold: true,
+          height: PosTextSize.size2,
+        ),
       ),
       ...g.hr(),
-      ...g.text('Fecha: ${dateFmt.format(p.date)}'),
-      ...g.text('Folio: ${p.folio}'),
-      if (p.seller != null) ...g.text('Vendedor: ${p.seller}'),
+      ...g.text('  Fecha: ${dateFmt.format(p.date)}', styles: bodyStyle),
+      ...g.text('  Folio: ${p.folio}', styles: bodyStyle),
+      if (p.seller != null)
+        ...g.text('  Vendedor: ${p.seller}', styles: bodyStyle),
       ...g.hr(),
       ...g.row([
-        PosColumn(
-          text: 'No.',
-          width: 3,
-          styles: const PosStyles(bold: true),
-        ),
-        PosColumn(
-          text: 'Monto',
-          width: 4,
-          styles: const PosStyles(bold: true, align: PosAlign.right),
-        ),
-        PosColumn(
-          text: 'Premio',
-          width: 5,
-          styles: const PosStyles(bold: true, align: PosAlign.right),
-        ),
+        gutter(),
+        PosColumn(text: 'No.', width: 3, styles: bodyStyle),
+        PosColumn(text: 'Monto', width: 3, styles: rightBodyStyle),
+        PosColumn(text: 'Premio', width: 4, styles: rightBodyStyle),
+        gutter(),
       ]),
       ...g.feed(1),
       for (final line in p.lines) ...[
         ...g.row([
-          PosColumn(
-            text: line.number,
-            width: 3,
-            styles: const PosStyles(bold: true),
-          ),
+          gutter(),
+          PosColumn(text: line.number, width: 3, styles: bodyStyle),
           PosColumn(
             text: money.format(line.amount),
-            width: 4,
-            styles: const PosStyles(align: PosAlign.right),
+            width: 3,
+            styles: rightBodyStyle,
           ),
           PosColumn(
             text: money.format(line.prize),
-            width: 5,
-            styles: const PosStyles(align: PosAlign.right),
+            width: 4,
+            styles: rightBodyStyle,
           ),
+          gutter(),
         ]),
         ...g.feed(1),
       ],
       ...g.hr(),
       ...g.row([
-        PosColumn(
-          text: 'TOTAL',
-          width: 6,
-          styles: const PosStyles(bold: true),
-        ),
+        gutter(),
+        PosColumn(text: 'TOTAL', width: 5, styles: bodyStyle),
         PosColumn(
           text: money.format(p.total),
-          width: 6,
-          styles: const PosStyles(align: PosAlign.right, bold: true),
+          width: 5,
+          styles: rightBodyStyle,
         ),
+        gutter(),
       ]),
       ...g.row([
-        PosColumn(
-          text: 'PREMIO MAX.',
-          width: 6,
-          styles: const PosStyles(bold: true),
-        ),
+        gutter(),
+        PosColumn(text: 'PREMIO MAX.', width: 5, styles: bodyStyle),
         PosColumn(
           text: money.format(p.totalPrize),
-          width: 6,
-          styles: const PosStyles(align: PosAlign.right, bold: true),
+          width: 5,
+          styles: rightBodyStyle,
         ),
+        gutter(),
       ]),
       ...g.hr(),
-      if (p.footer != null)
+      ...g.feed(1),
+      ...g.text(
+        'Boleto valido para 1 sorteo',
+        styles: const PosStyles(align: PosAlign.center, bold: true),
+      ),
+      ...g.feed(1),
+      ...g.text(
+        'Por favor revisar su compra',
+        styles: const PosStyles(align: PosAlign.center),
+      ),
+      ...g.text(
+        'No se aceptan devoluciones',
+        styles: const PosStyles(align: PosAlign.center),
+      ),
+      ...g.feed(1),
+      ...g.qrcode(p.toQrData(), size: QRSize.size6),
+      ...g.feed(1),
+      ...g.text(
+        'Folio: ${p.folio}',
+        styles: const PosStyles(align: PosAlign.center, bold: true),
+      ),
+      if (p.footer != null) ...[
+        ...g.feed(1),
         ...g.text(
-          p.footer!,
-          styles: const PosStyles(align: PosAlign.center),
+          '  ${p.footer}  ',
+          styles: const PosStyles(align: PosAlign.center, bold: true),
         ),
+      ],
       ...g.feed(2),
       ...g.cut(),
     ];
