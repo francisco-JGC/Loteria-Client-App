@@ -1,0 +1,69 @@
+import 'package:go_router/go_router.dart';
+
+import '../widgets/placeholder_page.dart';
+import 'app_shell.dart';
+
+final GoRouter appRouter = GoRouter(
+  initialLocation: '/juegos',
+  routes: [
+    ShellRoute(
+      builder: (context, state, child) => AppShell(child: child),
+      routes: [
+        GoRoute(
+          path: '/juegos',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: PlaceholderPage(title: 'Juegos'),
+          ),
+        ),
+        GoRoute(
+          path: '/reportes/facturas',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: PlaceholderPage(title: 'Facturas'),
+          ),
+        ),
+        GoRoute(
+          path: '/reportes/totales-sorteos',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: PlaceholderPage(title: 'Totales Sorteos'),
+          ),
+        ),
+        GoRoute(
+          path: '/reportes/boletos-ganadores',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: PlaceholderPage(title: 'Boletos Ganadores'),
+          ),
+        ),
+        GoRoute(
+          path: '/reportes/ultimos-resultados',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: PlaceholderPage(title: 'Últimos Resultados'),
+          ),
+        ),
+        GoRoute(
+          path: '/reportes/movimientos',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: PlaceholderPage(title: 'Movimientos'),
+          ),
+        ),
+        GoRoute(
+          path: '/herramientas/guia-suenos',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: PlaceholderPage(title: 'Guía de Sueños'),
+          ),
+        ),
+        GoRoute(
+          path: '/herramientas/cruz-suerte',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: PlaceholderPage(title: 'Cruz de la Suerte'),
+          ),
+        ),
+        GoRoute(
+          path: '/herramientas/piramide-suerte',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: PlaceholderPage(title: 'Pirámide de la Suerte'),
+          ),
+        ),
+      ],
+    ),
+  ],
+);
