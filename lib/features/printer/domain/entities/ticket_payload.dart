@@ -1,13 +1,18 @@
 import 'package:equatable/equatable.dart';
 
 class TicketLine extends Equatable {
-  const TicketLine({required this.number, required this.amount});
+  const TicketLine({
+    required this.number,
+    required this.amount,
+    required this.prize,
+  });
 
   final String number;
   final int amount;
+  final int prize;
 
   @override
-  List<Object?> get props => [number, amount];
+  List<Object?> get props => [number, amount, prize];
 }
 
 class TicketPayload extends Equatable {
@@ -28,6 +33,7 @@ class TicketPayload extends Equatable {
   final String? footer;
 
   int get total => lines.fold(0, (sum, l) => sum + l.amount);
+  int get totalPrize => lines.fold(0, (sum, l) => sum + l.prize);
   int get count => lines.length;
 
   @override

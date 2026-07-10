@@ -12,13 +12,13 @@ class BetTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
         children: [
           const Icon(Icons.tag, size: 20, color: Colors.black),
           const SizedBox(width: 8),
           SizedBox(
-            width: 48,
+            width: 40,
             child: Text(
               bet.numberLabel,
               style: const TextStyle(
@@ -28,15 +28,21 @@ class BetTile extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          const Icon(Icons.attach_money, size: 20, color: Colors.black),
           Expanded(
             child: Text(
               kCurrencyFormat.format(bet.amount),
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.black,
-              ),
+              style: const TextStyle(fontSize: 15, color: Colors.black),
+            ),
+          ),
+          const Icon(Icons.emoji_events_outlined,
+              size: 18, color: Colors.black),
+          const SizedBox(width: 4),
+          Text(
+            kCurrencyFormat.format(bet.prize),
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
             ),
           ),
           IconButton(

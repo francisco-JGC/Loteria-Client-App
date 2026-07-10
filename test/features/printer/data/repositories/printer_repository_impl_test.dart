@@ -91,8 +91,8 @@ void main() {
     final payload = TicketPayload(
       gameName: 'Diaria',
       lines: const [
-        TicketLine(number: '12', amount: 100),
-        TicketLine(number: '34', amount: 100),
+        TicketLine(number: '12', amount: 100, prize: 8000),
+        TicketLine(number: '34', amount: 100, prize: 8000),
       ],
       folio: 'ABC-001',
       date: DateTime(2026, 7, 10, 15, 30),

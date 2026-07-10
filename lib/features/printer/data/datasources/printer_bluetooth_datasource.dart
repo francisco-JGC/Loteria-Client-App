@@ -129,11 +129,17 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
         ),
         PosColumn(
           text: 'Monto',
-          width: 9,
+          width: 4,
+          styles: const PosStyles(bold: true, align: PosAlign.right),
+        ),
+        PosColumn(
+          text: 'Premio',
+          width: 5,
           styles: const PosStyles(bold: true, align: PosAlign.right),
         ),
       ]),
-      for (final line in p.lines)
+      ...g.feed(1),
+      for (final line in p.lines) ...[
         ...g.row([
           PosColumn(
             text: line.number,
@@ -142,10 +148,17 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
           ),
           PosColumn(
             text: money.format(line.amount),
-            width: 9,
+            width: 4,
+            styles: const PosStyles(align: PosAlign.right),
+          ),
+          PosColumn(
+            text: money.format(line.prize),
+            width: 5,
             styles: const PosStyles(align: PosAlign.right),
           ),
         ]),
+        ...g.feed(1),
+      ],
       ...g.hr(),
       ...g.row([
         PosColumn(
@@ -155,6 +168,18 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
         ),
         PosColumn(
           text: money.format(p.total),
+          width: 6,
+          styles: const PosStyles(align: PosAlign.right, bold: true),
+        ),
+      ]),
+      ...g.row([
+        PosColumn(
+          text: 'PREMIO MAX.',
+          width: 6,
+          styles: const PosStyles(bold: true),
+        ),
+        PosColumn(
+          text: money.format(p.totalPrize),
           width: 6,
           styles: const PosStyles(align: PosAlign.right, bold: true),
         ),

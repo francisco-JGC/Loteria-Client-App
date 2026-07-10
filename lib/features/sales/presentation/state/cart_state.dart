@@ -10,6 +10,7 @@ class CartState extends Equatable {
   bool get isEmpty => bets.isEmpty;
   bool get isNotEmpty => bets.isNotEmpty;
   int get total => bets.fold(0, (sum, b) => sum + b.amount);
+  int get totalPrize => bets.fold(0, (sum, b) => sum + b.prize);
   int get count => bets.length;
 
   @override

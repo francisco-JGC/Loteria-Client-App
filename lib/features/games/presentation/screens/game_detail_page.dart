@@ -161,7 +161,11 @@ class GameDetailPage extends ConsumerWidget {
     final payload = TicketPayload(
       gameName: game.name,
       lines: cart.bets
-          .map((b) => TicketLine(number: b.numberLabel, amount: b.amount))
+          .map((b) => TicketLine(
+                number: b.numberLabel,
+                amount: b.amount,
+                prize: b.prize,
+              ))
           .toList(),
       folio: _generateFolio(),
       date: DateTime.now(),
