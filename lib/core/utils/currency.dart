@@ -7,3 +7,5 @@ final NumberFormat kCurrencyFormat = NumberFormat.currency(
   symbol: '$kCurrencySymbol ',
   decimalDigits: 0,
 );
+
+final NumberFormat kAmountFormat = NumberFormat('#,##0', 'en_US');

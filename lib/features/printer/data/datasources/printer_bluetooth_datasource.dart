@@ -100,10 +100,12 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
     final profile = await CapabilityProfile.load();
     final g = Generator(PaperSize.mm58, profile);
     final dateFmt = DateFormat('yyyy-MM-dd HH:mm');
-    final money = kCurrencyFormat;
+    final money = kAmountFormat;
 
-    const bodyStyle = PosStyles(bold: true, height: PosTextSize.size2);
-    const rightBodyStyle = PosStyles(
+    const infoStyle = PosStyles(bold: true);
+    const infoRight = PosStyles(bold: true, align: PosAlign.right);
+    const numberStyle = PosStyles(bold: true, height: PosTextSize.size2);
+    const numberRight = PosStyles(
       bold: true,
       height: PosTextSize.size2,
       align: PosAlign.right,
@@ -122,62 +124,45 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
       ),
       ...g.text(
         '  ${p.gameName}  ',
-        styles: const PosStyles(
-          align: PosAlign.center,
-          bold: true,
-          height: PosTextSize.size2,
-        ),
+        styles: const PosStyles(align: PosAlign.center, bold: true),
       ),
       ...g.hr(),
-      ...g.text('  Fecha: ${dateFmt.format(p.date)}', styles: bodyStyle),
-      ...g.text('  Folio: ${p.folio}', styles: bodyStyle),
+      ...g.text('  Fecha: ${dateFmt.format(p.date)}', styles: infoStyle),
+      ...g.text('  Folio: ${p.folio}', styles: infoStyle),
       if (p.seller != null)
-        ...g.text('  Vendedor: ${p.seller}', styles: bodyStyle),
+        ...g.text('  Vendedor: ${p.seller}', styles: infoStyle),
       ...g.hr(),
       ...g.row([
         gutter(),
-        PosColumn(text: 'No.', width: 3, styles: bodyStyle),
-        PosColumn(text: 'Monto', width: 3, styles: rightBodyStyle),
-        PosColumn(text: 'Premio', width: 4, styles: rightBodyStyle),
+        PosColumn(text: 'No.', width: 3, styles: infoStyle),
+        PosColumn(text: 'Monto', width: 3, styles: infoRight),
+        PosColumn(text: 'Premio', width: 4, styles: infoRight),
         gutter(),
       ]),
-      ...g.feed(1),
-      for (final line in p.lines) ...[
+      for (final line in p.lines)
         ...g.row([
           gutter(),
-          PosColumn(text: line.number, width: 3, styles: bodyStyle),
+          PosColumn(text: line.number, width: 3, styles: numberStyle),
           PosColumn(
             text: money.format(line.amount),
             width: 3,
-            styles: rightBodyStyle,
+            styles: numberRight,
           ),
           PosColumn(
             text: money.format(line.prize),
             width: 4,
-            styles: rightBodyStyle,
+            styles: numberRight,
           ),
           gutter(),
         ]),
-        ...g.feed(1),
-      ],
       ...g.hr(),
       ...g.row([
         gutter(),
-        PosColumn(text: 'TOTAL', width: 5, styles: bodyStyle),
+        PosColumn(text: 'TOTAL', width: 5, styles: infoStyle),
         PosColumn(
           text: money.format(p.total),
           width: 5,
-          styles: rightBodyStyle,
-        ),
-        gutter(),
-      ]),
-      ...g.row([
-        gutter(),
-        PosColumn(text: 'PREMIO MAX.', width: 5, styles: bodyStyle),
-        PosColumn(
-          text: money.format(p.totalPrize),
-          width: 5,
-          styles: rightBodyStyle,
+          styles: infoRight,
         ),
         gutter(),
       ]),
