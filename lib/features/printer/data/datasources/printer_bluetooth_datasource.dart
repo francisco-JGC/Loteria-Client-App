@@ -2,6 +2,7 @@ import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 
+import '../../../../core/utils/currency.dart';
 import '../../domain/entities/ticket_payload.dart';
 import '../models/printer_device_model.dart';
 
@@ -99,11 +100,7 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
     final profile = await CapabilityProfile.load();
     final g = Generator(PaperSize.mm58, profile);
     final dateFmt = DateFormat('yyyy-MM-dd HH:mm');
-    final amountFmt = NumberFormat.currency(
-      locale: 'es_DO',
-      symbol: 'RD\$ ',
-      decimalDigits: 2,
-    );
+    final money = kCurrencyFormat;
 
     return [
       ...g.text(
@@ -124,25 +121,40 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
       ...g.text('Folio: ${p.folio}'),
       if (p.seller != null) ...g.text('Vendedor: ${p.seller}'),
       ...g.hr(),
-      ...g.text('NUMEROS', styles: const PosStyles(bold: true)),
-      ...g.text(
-        p.numbers.join(' - '),
-        styles: const PosStyles(
-          align: PosAlign.center,
-          height: PosTextSize.size2,
-          width: PosTextSize.size2,
-          bold: true,
+      ...g.row([
+        PosColumn(
+          text: 'No.',
+          width: 3,
+          styles: const PosStyles(bold: true),
         ),
-      ),
+        PosColumn(
+          text: 'Monto',
+          width: 9,
+          styles: const PosStyles(bold: true, align: PosAlign.right),
+        ),
+      ]),
+      for (final line in p.lines)
+        ...g.row([
+          PosColumn(
+            text: line.number,
+            width: 3,
+            styles: const PosStyles(bold: true),
+          ),
+          PosColumn(
+            text: money.format(line.amount),
+            width: 9,
+            styles: const PosStyles(align: PosAlign.right),
+          ),
+        ]),
       ...g.hr(),
       ...g.row([
         PosColumn(
-          text: 'MONTO',
+          text: 'TOTAL',
           width: 6,
           styles: const PosStyles(bold: true),
         ),
         PosColumn(
-          text: amountFmt.format(p.amount),
+          text: money.format(p.total),
           width: 6,
           styles: const PosStyles(align: PosAlign.right, bold: true),
         ),

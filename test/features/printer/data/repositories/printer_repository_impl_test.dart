@@ -90,8 +90,10 @@ void main() {
     when(() => bluetooth.printTicket(any())).thenAnswer((_) async {});
     final payload = TicketPayload(
       gameName: 'Diaria',
-      numbers: const ['12', '34', '56'],
-      amount: 100,
+      lines: const [
+        TicketLine(number: '12', amount: 100),
+        TicketLine(number: '34', amount: 100),
+      ],
       folio: 'ABC-001',
       date: DateTime(2026, 7, 10, 15, 30),
     );
