@@ -7,12 +7,14 @@ import '../../features/games/data/repositories/games_repository_impl.dart';
 import '../../features/games/domain/repositories/games_repository.dart';
 import '../../features/games/domain/usecases/get_authorized_games.dart';
 import '../../features/printer/data/datasources/printer_bluetooth_datasource.dart';
+import '../../features/printer/data/datasources/printer_local_datasource.dart';
 import '../../features/printer/data/repositories/printer_repository_impl.dart';
 import '../../features/printer/domain/repositories/printer_repository.dart';
 import '../../features/printer/domain/usecases/connect_printer.dart';
 import '../../features/printer/domain/usecases/disconnect_printer.dart';
 import '../../features/printer/domain/usecases/get_paired_printers.dart';
 import '../../features/printer/domain/usecases/print_test.dart';
+import '../../features/printer/domain/usecases/print_ticket.dart';
 import '../../features/settings/data/datasources/settings_local_datasource.dart';
 import '../../features/settings/data/repositories/settings_repository_impl.dart';
 import '../../features/settings/domain/repositories/settings_repository.dart';
@@ -69,8 +71,11 @@ void _registerPrinterFeature() {
     ..registerLazySingleton<PrinterBluetoothDatasource>(
       PrinterBluetoothDatasourceImpl.new,
     )
+    ..registerLazySingleton<PrinterLocalDatasource>(
+      () => PrinterLocalDatasourceImpl(prefs: getIt()),
+    )
     ..registerLazySingleton<PrinterRepository>(
-      () => PrinterRepositoryImpl(datasource: getIt()),
+      () => PrinterRepositoryImpl(datasource: getIt(), local: getIt()),
     )
     ..registerFactory<GetPairedPrinters>(
       () => GetPairedPrinters(repository: getIt()),
@@ -83,5 +88,8 @@ void _registerPrinterFeature() {
     )
     ..registerFactory<PrintTest>(
       () => PrintTest(repository: getIt()),
+    )
+    ..registerFactory<PrintTicket>(
+      () => PrintTicket(repository: getIt()),
     );
 }

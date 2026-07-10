@@ -238,6 +238,15 @@ class _ActionsBar extends StatelessWidget {
               onPressed: controller.disconnect,
             ),
           ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton.icon(
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Olvidar impresora'),
+              onPressed: controller.forgetPrinter,
+            ),
+          ),
         ],
       ),
     );

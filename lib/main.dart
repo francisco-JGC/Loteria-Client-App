@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/di/injection.dart';
 import 'core/navigation/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'features/printer/presentation/state/printer_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,8 +16,21 @@ Future<void> main() async {
   runApp(const ProviderScope(child: LoteriaClientApp()));
 }
 
-class LoteriaClientApp extends StatelessWidget {
+class LoteriaClientApp extends ConsumerStatefulWidget {
   const LoteriaClientApp({super.key});
+
+  @override
+  ConsumerState<LoteriaClientApp> createState() => _LoteriaClientAppState();
+}
+
+class _LoteriaClientAppState extends ConsumerState<LoteriaClientApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(printerControllerProvider.notifier).autoReconnect();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

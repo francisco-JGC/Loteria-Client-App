@@ -2,6 +2,7 @@ import 'package:fpdart/fpdart.dart';
 
 import '../../../../core/errors/failures.dart';
 import '../entities/printer_device.dart';
+import '../entities/ticket_payload.dart';
 
 abstract interface class PrinterRepository {
   Future<Either<Failure, bool>> isBluetoothEnabled();
@@ -10,4 +11,9 @@ abstract interface class PrinterRepository {
   Future<Either<Failure, Unit>> disconnect();
   Future<Either<Failure, bool>> isConnected();
   Future<Either<Failure, Unit>> printTest();
+  Future<Either<Failure, Unit>> printTicket(TicketPayload payload);
+
+  Future<Either<Failure, PrinterDevice?>> getLastConnected();
+  Future<Either<Failure, Unit>> saveLastConnected(PrinterDevice device);
+  Future<Either<Failure, Unit>> clearLastConnected();
 }
