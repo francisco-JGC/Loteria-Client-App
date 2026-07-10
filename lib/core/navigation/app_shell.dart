@@ -28,7 +28,7 @@ class AppShell extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Configuración',
-            onPressed: () {},
+            onPressed: () => context.push('/configuracion'),
           ),
           IconButton(
             icon: const Icon(Icons.logout),
