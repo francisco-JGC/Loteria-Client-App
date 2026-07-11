@@ -23,10 +23,9 @@ class Gana3CartController extends Notifier<Gana3CartState> {
     if (number < 0 || number > 999) return AddBetOutcome.invalid;
     if (amount < 1 || amount > 999) return AddBetOutcome.invalid;
     state = Gana3CartState(
-      bets: [
-        ...state.bets,
+      bets: _merge(state.bets, [
         Gana3Bet(number: number, amount: amount, isExact: isExact),
-      ],
+      ]),
       client: _clean(client) ?? state.client,
     );
     return AddBetOutcome.added;
@@ -40,12 +39,12 @@ class Gana3CartController extends Notifier<Gana3CartState> {
   }) {
     if (start < 0 || end > 999 || end < start) return;
     if (amount < 1 || amount > 999) return;
-    final newBets = [
+    final incoming = [
       for (var n = start; n <= end; n++)
         Gana3Bet(number: n, amount: amount, isExact: isExact),
     ];
     state = Gana3CartState(
-      bets: [...state.bets, ...newBets],
+      bets: _merge(state.bets, incoming),
       client: state.client,
     );
   }
@@ -61,13 +60,32 @@ class Gana3CartController extends Notifier<Gana3CartState> {
     while (numbers.length < count.clamp(1, 1000)) {
       numbers.add(random.nextInt(1000));
     }
-    final newBets = numbers
+    final incoming = numbers
         .map((n) => Gana3Bet(number: n, amount: amount, isExact: isExact))
         .toList();
     state = Gana3CartState(
-      bets: [...state.bets, ...newBets],
+      bets: _merge(state.bets, incoming),
       client: state.client,
     );
+  }
+
+  List<Gana3Bet> _merge(List<Gana3Bet> existing, List<Gana3Bet> incoming) {
+    final result = [...existing];
+    for (final b in incoming) {
+      final i = result.indexWhere(
+        (e) => e.number == b.number && e.isExact == b.isExact,
+      );
+      if (i >= 0) {
+        result[i] = Gana3Bet(
+          number: b.number,
+          amount: result[i].amount + b.amount,
+          isExact: b.isExact,
+        );
+      } else {
+        result.add(b);
+      }
+    }
+    return result;
   }
 
   void removeAt(int index) {

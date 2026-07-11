@@ -36,6 +36,14 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
 
   @override
   Future<void> connect(String address) async {
+    // Force disconnect first — the plugin can hold a stale handle that
+    // makes a fresh connect() return false immediately.
+    try {
+      await PrintBluetoothThermal.disconnect;
+    } catch (_) {
+      // Ignore: no active connection.
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 300));
     final ok =
         await PrintBluetoothThermal.connect(macPrinterAddress: address);
     if (!ok) {

@@ -122,19 +122,32 @@ class MultiSorteoCartController extends Notifier<MultiSorteoCartState> {
     required int prize,
     required String? client,
   }) {
-    final incoming = _clean(client);
+    final incomingClient = _clean(client);
+    final bets = [...state.bets];
+    final i = bets.indexWhere(
+      (b) => b.subGameId == subGameId && b.label == label,
+    );
+    if (i >= 0) {
+      final existing = bets[i];
+      bets[i] = MultiSorteoBet(
+        subGameId: existing.subGameId,
+        subGameName: existing.subGameName,
+        label: existing.label,
+        amount: existing.amount + amount,
+        prize: existing.prize + prize,
+      );
+    } else {
+      bets.add(MultiSorteoBet(
+        subGameId: subGameId,
+        subGameName: subGameName,
+        label: label,
+        amount: amount,
+        prize: prize,
+      ));
+    }
     state = MultiSorteoCartState(
-      bets: [
-        ...state.bets,
-        MultiSorteoBet(
-          subGameId: subGameId,
-          subGameName: subGameName,
-          label: label,
-          amount: amount,
-          prize: prize,
-        ),
-      ],
-      client: incoming ?? state.client,
+      bets: bets,
+      client: incomingClient ?? state.client,
     );
   }
 

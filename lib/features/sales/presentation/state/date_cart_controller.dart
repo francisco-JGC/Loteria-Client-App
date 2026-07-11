@@ -22,10 +22,9 @@ class DateCartController extends Notifier<DateCartState> {
     if (month < 1 || month > 12) return AddBetOutcome.invalid;
     if (amount < 1 || amount > 999) return AddBetOutcome.invalid;
     state = DateCartState(
-      bets: [
-        ...state.bets,
+      bets: _merge(state.bets, [
         DateBet(day: day, month: month, amount: amount),
-      ],
+      ]),
       client: _clean(client) ?? state.client,
     );
     return AddBetOutcome.added;
@@ -40,14 +39,33 @@ class DateCartController extends Notifier<DateCartState> {
     if (dayStart < 1 || dayEnd > 31 || dayEnd < dayStart) return;
     if (month < 1 || month > 12) return;
     if (amount < 1 || amount > 999) return;
-    final newBets = [
+    final incoming = [
       for (var d = dayStart; d <= dayEnd; d++)
         DateBet(day: d, month: month, amount: amount),
     ];
     state = DateCartState(
-      bets: [...state.bets, ...newBets],
+      bets: _merge(state.bets, incoming),
       client: state.client,
     );
+  }
+
+  List<DateBet> _merge(List<DateBet> existing, List<DateBet> incoming) {
+    final result = [...existing];
+    for (final b in incoming) {
+      final i = result.indexWhere(
+        (e) => e.day == b.day && e.month == b.month,
+      );
+      if (i >= 0) {
+        result[i] = DateBet(
+          day: b.day,
+          month: b.month,
+          amount: result[i].amount + b.amount,
+        );
+      } else {
+        result.add(b);
+      }
+    }
+    return result;
   }
 
   void removeAt(int index) {

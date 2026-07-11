@@ -22,7 +22,7 @@ class ComboCartController extends Notifier<ComboCartState> {
     if (number < 0 || number > 9999) return AddBetOutcome.invalid;
     if (amount < 1 || amount > 999) return AddBetOutcome.invalid;
     state = ComboCartState(
-      bets: [...state.bets, ComboBet(number: number, amount: amount)],
+      bets: _merge(state.bets, [ComboBet(number: number, amount: amount)]),
       client: _clean(client) ?? state.client,
     );
     return AddBetOutcome.added;
@@ -35,11 +35,11 @@ class ComboCartController extends Notifier<ComboCartState> {
   }) {
     if (start < 0 || end > 9999 || end < start) return;
     if (amount < 1 || amount > 999) return;
-    final newBets = [
+    final incoming = [
       for (var n = start; n <= end; n++) ComboBet(number: n, amount: amount),
     ];
     state = ComboCartState(
-      bets: [...state.bets, ...newBets],
+      bets: _merge(state.bets, incoming),
       client: state.client,
     );
   }
@@ -51,12 +51,28 @@ class ComboCartController extends Notifier<ComboCartState> {
     while (numbers.length < count.clamp(1, 10000)) {
       numbers.add(random.nextInt(10000));
     }
-    final newBets =
+    final incoming =
         numbers.map((n) => ComboBet(number: n, amount: amount)).toList();
     state = ComboCartState(
-      bets: [...state.bets, ...newBets],
+      bets: _merge(state.bets, incoming),
       client: state.client,
     );
+  }
+
+  List<ComboBet> _merge(List<ComboBet> existing, List<ComboBet> incoming) {
+    final result = [...existing];
+    for (final b in incoming) {
+      final i = result.indexWhere((e) => e.number == b.number);
+      if (i >= 0) {
+        result[i] = ComboBet(
+          number: b.number,
+          amount: result[i].amount + b.amount,
+        );
+      } else {
+        result.add(b);
+      }
+    }
+    return result;
   }
 
   void removeAt(int index) {

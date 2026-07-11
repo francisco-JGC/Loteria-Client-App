@@ -24,7 +24,7 @@ class CartController extends Notifier<CartState> {
       return AddBetOutcome.invalid;
     }
     state = CartState(
-      bets: [...state.bets, Bet(number: number, amount: amount)],
+      bets: _merge(state.bets, [Bet(number: number, amount: amount)]),
       client: _clean(client) ?? state.client,
     );
     return AddBetOutcome.added;
@@ -35,11 +35,11 @@ class CartController extends Notifier<CartState> {
     required int end,
     required int amount,
   }) {
-    final newBets = [
+    final incoming = [
       for (var n = start; n <= end; n++) Bet(number: n, amount: amount),
     ];
     state = CartState(
-      bets: [...state.bets, ...newBets],
+      bets: _merge(state.bets, incoming),
       client: state.client,
     );
   }
@@ -51,10 +51,10 @@ class CartController extends Notifier<CartState> {
     while (numbers.length < target) {
       numbers.add(random.nextInt(100));
     }
-    final newBets =
+    final incoming =
         numbers.map((n) => Bet(number: n, amount: amount)).toList();
     state = CartState(
-      bets: [...state.bets, ...newBets],
+      bets: _merge(state.bets, incoming),
       client: state.client,
     );
   }
@@ -62,9 +62,25 @@ class CartController extends Notifier<CartState> {
   void addBets(List<Bet> bets, {String? client}) {
     if (bets.isEmpty) return;
     state = CartState(
-      bets: [...state.bets, ...bets],
+      bets: _merge(state.bets, bets),
       client: _clean(client) ?? state.client,
     );
+  }
+
+  List<Bet> _merge(List<Bet> existing, List<Bet> incoming) {
+    final result = [...existing];
+    for (final b in incoming) {
+      final i = result.indexWhere((e) => e.number == b.number);
+      if (i >= 0) {
+        result[i] = Bet(
+          number: b.number,
+          amount: result[i].amount + b.amount,
+        );
+      } else {
+        result.add(b);
+      }
+    }
+    return result;
   }
 
   void removeAt(int index) {
