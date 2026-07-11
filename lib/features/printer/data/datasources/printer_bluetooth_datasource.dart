@@ -143,11 +143,14 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
       ]),
       for (var i = 0; i < p.lines.length; i++) ...[
         if (p.lines[i].subGameName != null &&
-            (i == 0 || p.lines[i - 1].subGameName != p.lines[i].subGameName))
+            (i == 0 ||
+                p.lines[i - 1].subGameName != p.lines[i].subGameName)) ...[
+          if (i > 0) ...g.feed(1),
           ...g.text(
             '  -- ${p.lines[i].subGameName!.toUpperCase()} --',
             styles: const PosStyles(bold: true),
           ),
+        ],
         ...g.row([
           gutter(),
           PosColumn(text: p.lines[i].number, width: 3, styles: numberStyle),

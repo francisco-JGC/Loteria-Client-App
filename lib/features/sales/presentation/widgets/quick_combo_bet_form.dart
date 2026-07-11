@@ -5,13 +5,19 @@ import '../../../../core/utils/currency.dart';
 import '../state/cart_controller.dart';
 
 class QuickComboBetForm extends StatefulWidget {
-  const QuickComboBetForm({required this.onSubmit, super.key});
+  const QuickComboBetForm({
+    required this.onSubmit,
+    this.clientController,
+    super.key,
+  });
 
   final AddBetOutcome Function({
     required int number,
     required int amount,
     String? client,
   }) onSubmit;
+
+  final TextEditingController? clientController;
 
   @override
   State<QuickComboBetForm> createState() => _QuickComboBetFormState();
@@ -20,7 +26,8 @@ class QuickComboBetForm extends StatefulWidget {
 class _QuickComboBetFormState extends State<QuickComboBetForm> {
   final _numberCtrl = TextEditingController();
   final _amountCtrl = TextEditingController();
-  final _clientCtrl = TextEditingController();
+  late final TextEditingController _clientCtrl =
+      widget.clientController ?? TextEditingController();
 
   final _numberFocus = FocusNode();
   final _amountFocus = FocusNode();
@@ -39,7 +46,7 @@ class _QuickComboBetFormState extends State<QuickComboBetForm> {
   void dispose() {
     _numberCtrl.dispose();
     _amountCtrl.dispose();
-    _clientCtrl.dispose();
+    if (widget.clientController == null) _clientCtrl.dispose();
     _numberFocus.dispose();
     _amountFocus.dispose();
     _clientFocus.dispose();

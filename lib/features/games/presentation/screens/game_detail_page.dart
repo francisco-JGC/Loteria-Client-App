@@ -241,6 +241,13 @@ class _MultiSorteoGameView extends ConsumerStatefulWidget {
 class _MultiSorteoGameViewState
     extends ConsumerState<_MultiSorteoGameView> {
   Game? _selectedSubGame;
+  final TextEditingController _sharedClientCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _sharedClientCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -370,6 +377,7 @@ class _MultiSorteoGameViewState
     if (sub.id == _kDateGameId) {
       return QuickDateBetForm(
         key: key,
+        clientController: _sharedClientCtrl,
         onSubmit: ({
           required int day,
           required int month,
@@ -389,6 +397,7 @@ class _MultiSorteoGameViewState
     if (_kGana3LikeGameIds.contains(sub.id)) {
       return QuickGana3BetForm(
         key: key,
+        clientController: _sharedClientCtrl,
         onSubmit: ({
           required int number,
           required int amount,
@@ -408,6 +417,7 @@ class _MultiSorteoGameViewState
     if (sub.id == _kComboGameId) {
       return QuickComboBetForm(
         key: key,
+        clientController: _sharedClientCtrl,
         onSubmit: ({
           required int number,
           required int amount,
@@ -424,6 +434,7 @@ class _MultiSorteoGameViewState
     }
     return QuickBetForm(
       key: key,
+      clientController: _sharedClientCtrl,
       onSubmit: ({
         required int number,
         required int amount,

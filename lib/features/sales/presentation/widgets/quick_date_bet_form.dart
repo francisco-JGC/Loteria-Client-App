@@ -6,7 +6,11 @@ import '../../domain/entities/date_bet.dart';
 import '../state/cart_controller.dart';
 
 class QuickDateBetForm extends StatefulWidget {
-  const QuickDateBetForm({required this.onSubmit, super.key});
+  const QuickDateBetForm({
+    required this.onSubmit,
+    this.clientController,
+    super.key,
+  });
 
   final AddBetOutcome Function({
     required int day,
@@ -15,6 +19,8 @@ class QuickDateBetForm extends StatefulWidget {
     String? client,
   }) onSubmit;
 
+  final TextEditingController? clientController;
+
   @override
   State<QuickDateBetForm> createState() => _QuickDateBetFormState();
 }
@@ -22,7 +28,8 @@ class QuickDateBetForm extends StatefulWidget {
 class _QuickDateBetFormState extends State<QuickDateBetForm> {
   final _dayCtrl = TextEditingController();
   final _amountCtrl = TextEditingController();
-  final _clientCtrl = TextEditingController();
+  late final TextEditingController _clientCtrl =
+      widget.clientController ?? TextEditingController();
 
   final _dayFocus = FocusNode();
   final _amountFocus = FocusNode();
@@ -42,7 +49,7 @@ class _QuickDateBetFormState extends State<QuickDateBetForm> {
   void dispose() {
     _dayCtrl.dispose();
     _amountCtrl.dispose();
-    _clientCtrl.dispose();
+    if (widget.clientController == null) _clientCtrl.dispose();
     _dayFocus.dispose();
     _amountFocus.dispose();
     _clientFocus.dispose();
