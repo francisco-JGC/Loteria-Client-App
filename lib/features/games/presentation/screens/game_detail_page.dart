@@ -264,7 +264,18 @@ class _MultiSorteoGameViewState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.game.name),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(widget.game.name, style: const TextStyle(fontSize: 18)),
+            if (_selectedSubGame != null)
+              Text(
+                _selectedSubGame!.name,
+                style: const TextStyle(fontSize: 12),
+              ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
@@ -277,13 +288,33 @@ class _MultiSorteoGameViewState
       ),
       body: Column(
         children: [
-          _SubGameSelector(
-            subGames: subGames,
-            selected: _selectedSubGame,
-            onChanged: (g) => setState(() => _selectedSubGame = g),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            child: SizedBox(
+              height: 40,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: subGames.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (_, i) {
+                  final g = subGames[i];
+                  final isSelected = _selectedSubGame?.id == g.id;
+                  return ChoiceChip(
+                    label: Text(g.name),
+                    selected: isSelected,
+                    onSelected: (_) {
+                      setState(() => _selectedSubGame = g);
+                    },
+                  );
+                },
+              ),
+            ),
           ),
           if (_selectedSubGame != null)
-            _buildForm(controller, _selectedSubGame!),
+            KeyedSubtree(
+              key: ValueKey('multi-body-${_selectedSubGame!.id}'),
+              child: _buildForm(controller, _selectedSubGame!),
+            ),
           Expanded(
             child: cart.isEmpty
                 ? const _EmptyView(
@@ -389,50 +420,6 @@ class _MultiSorteoGameViewState
   }
 }
 
-class _SubGameSelector extends StatelessWidget {
-  const _SubGameSelector({
-    required this.subGames,
-    required this.selected,
-    required this.onChanged,
-  });
-
-  final List<Game> subGames;
-  final Game? selected;
-  final ValueChanged<Game?> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      child: InputDecorator(
-        decoration: const InputDecoration(
-          labelText: 'Juego',
-          isDense: true,
-          prefixIcon: Icon(Icons.sports_esports),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: selected?.id,
-            isExpanded: true,
-            isDense: true,
-            items: [
-              for (final g in subGames)
-                DropdownMenuItem(value: g.id, child: Text(g.name)),
-            ],
-            onChanged: (id) {
-              if (id == null) return;
-              final match = subGames.firstWhere(
-                (g) => g.id == id,
-                orElse: () => subGames.first,
-              );
-              onChanged(match);
-            },
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _ComboGameView extends ConsumerWidget {
   const _ComboGameView({required this.game});

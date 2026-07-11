@@ -122,6 +122,7 @@ class MultiSorteoCartController extends Notifier<MultiSorteoCartState> {
     required int prize,
     required String? client,
   }) {
+    final incoming = _clean(client);
     state = MultiSorteoCartState(
       bets: [
         ...state.bets,
@@ -133,7 +134,7 @@ class MultiSorteoCartController extends Notifier<MultiSorteoCartState> {
           prize: prize,
         ),
       ],
-      client: _clean(client),
+      client: incoming ?? state.client,
     );
   }
 
