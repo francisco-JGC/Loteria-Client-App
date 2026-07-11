@@ -142,12 +142,15 @@ class _RegularGameView extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => LineForm(
-        onSubmit: (r) => controller.addRange(
-          start: r.start,
-          end: r.end,
-          amount: r.amount,
-        ),
+      builder: (ctx) => LineForm(
+        onSubmit: (r) {
+          controller.addRange(
+            start: r.start,
+            end: r.end,
+            amount: r.amount,
+          );
+          Navigator.of(ctx).pop();
+        },
       ),
     );
   }
@@ -160,11 +163,11 @@ class _RegularGameView extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => RandomForm(
-        onSubmit: (r) => controller.addRandom(
-          count: r.count,
-          amount: r.amount,
-        ),
+      builder: (ctx) => RandomForm(
+        onSubmit: (r) {
+          controller.addRandom(count: r.count, amount: r.amount);
+          Navigator.of(ctx).pop();
+        },
       ),
     );
   }
@@ -193,13 +196,16 @@ class _DateGameView extends ConsumerWidget {
               context: context,
               isScrollControlled: true,
               showDragHandle: true,
-              builder: (_) => DateLineForm(
-                onSubmit: (r) => controller.addRange(
-                  dayStart: r.dayStart,
-                  dayEnd: r.dayEnd,
-                  month: r.month,
-                  amount: r.amount,
-                ),
+              builder: (ctx) => DateLineForm(
+                onSubmit: (r) {
+                  controller.addRange(
+                    dayStart: r.dayStart,
+                    dayEnd: r.dayEnd,
+                    month: r.month,
+                    amount: r.amount,
+                  );
+                  Navigator.of(ctx).pop();
+                },
               ),
             ),
           ),
@@ -350,23 +356,14 @@ class _MultiSorteoGameViewState
         final cart = ref.watch(cartControllerProvider(sub.id));
         final controller = ref.read(cartControllerProvider(sub.id).notifier);
         return Expanded(
-          child: Column(
-            children: [
-              QuickBetForm(onSubmit: controller.addSingle),
-              Expanded(
-                child: cart.isEmpty
-                    ? const _EmptyView()
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: cart.bets.length,
-                        separatorBuilder: (_, _) => const Divider(height: 1),
-                        itemBuilder: (_, i) => BetTile(
-                          bet: cart.bets[i],
-                          onRemove: () => controller.removeAt(i),
-                        ),
-                      ),
-              ),
-            ],
+          child: _scrollableCart(
+            form: QuickBetForm(onSubmit: controller.addSingle),
+            isEmpty: cart.isEmpty,
+            itemCount: cart.bets.length,
+            itemBuilder: (i) => BetTile(
+              bet: cart.bets[i],
+              onRemove: () => controller.removeAt(i),
+            ),
           ),
         );
       case GameType.date:
@@ -374,26 +371,16 @@ class _MultiSorteoGameViewState
         final controller =
             ref.read(dateCartControllerProvider(sub.id).notifier);
         return Expanded(
-          child: Column(
-            children: [
-              QuickDateBetForm(onSubmit: controller.addSingle),
-              Expanded(
-                child: cart.isEmpty
-                    ? const _EmptyView(
-                        icon: Icons.calendar_month_outlined,
-                        label: 'Aún no hay fechas registradas',
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: cart.bets.length,
-                        separatorBuilder: (_, _) => const Divider(height: 1),
-                        itemBuilder: (_, i) => DateBetTile(
-                          bet: cart.bets[i],
-                          onRemove: () => controller.removeAt(i),
-                        ),
-                      ),
-              ),
-            ],
+          child: _scrollableCart(
+            form: QuickDateBetForm(onSubmit: controller.addSingle),
+            isEmpty: cart.isEmpty,
+            emptyIcon: Icons.calendar_month_outlined,
+            emptyLabel: 'Aún no hay fechas registradas',
+            itemCount: cart.bets.length,
+            itemBuilder: (i) => DateBetTile(
+              bet: cart.bets[i],
+              onRemove: () => controller.removeAt(i),
+            ),
           ),
         );
       case GameType.threeDigit:
@@ -401,23 +388,14 @@ class _MultiSorteoGameViewState
         final controller =
             ref.read(gana3CartControllerProvider(sub.id).notifier);
         return Expanded(
-          child: Column(
-            children: [
-              QuickGana3BetForm(onSubmit: controller.addSingle),
-              Expanded(
-                child: cart.isEmpty
-                    ? const _EmptyView()
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: cart.bets.length,
-                        separatorBuilder: (_, _) => const Divider(height: 1),
-                        itemBuilder: (_, i) => Gana3BetTile(
-                          bet: cart.bets[i],
-                          onRemove: () => controller.removeAt(i),
-                        ),
-                      ),
-              ),
-            ],
+          child: _scrollableCart(
+            form: QuickGana3BetForm(onSubmit: controller.addSingle),
+            isEmpty: cart.isEmpty,
+            itemCount: cart.bets.length,
+            itemBuilder: (i) => Gana3BetTile(
+              bet: cart.bets[i],
+              onRemove: () => controller.removeAt(i),
+            ),
           ),
         );
       case GameType.fourDigit:
@@ -425,28 +403,48 @@ class _MultiSorteoGameViewState
         final controller =
             ref.read(comboCartControllerProvider(sub.id).notifier);
         return Expanded(
-          child: Column(
-            children: [
-              QuickComboBetForm(onSubmit: controller.addSingle),
-              Expanded(
-                child: cart.isEmpty
-                    ? const _EmptyView()
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: cart.bets.length,
-                        separatorBuilder: (_, _) => const Divider(height: 1),
-                        itemBuilder: (_, i) => ComboBetTile(
-                          bet: cart.bets[i],
-                          onRemove: () => controller.removeAt(i),
-                        ),
-                      ),
-              ),
-            ],
+          child: _scrollableCart(
+            form: QuickComboBetForm(onSubmit: controller.addSingle),
+            isEmpty: cart.isEmpty,
+            itemCount: cart.bets.length,
+            itemBuilder: (i) => ComboBetTile(
+              bet: cart.bets[i],
+              onRemove: () => controller.removeAt(i),
+            ),
           ),
         );
       case GameType.multiSorteo:
         return const SizedBox.shrink();
     }
+  }
+
+  Widget _scrollableCart({
+    required Widget form,
+    required bool isEmpty,
+    required int itemCount,
+    required Widget Function(int index) itemBuilder,
+    IconData emptyIcon = Icons.list_alt_outlined,
+    String emptyLabel = 'Aún no hay números registrados',
+  }) {
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(child: form),
+        if (isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: _EmptyView(icon: emptyIcon, label: emptyLabel),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            sliver: SliverList.separated(
+              itemCount: itemCount,
+              separatorBuilder: (_, _) => const Divider(height: 1),
+              itemBuilder: (_, i) => itemBuilder(i),
+            ),
+          ),
+      ],
+    );
   }
 
   ({int total, int count, bool isEmpty}) _readCartSummary(Game sub) {
@@ -872,12 +870,15 @@ class _ComboGameView extends ConsumerWidget {
               context: context,
               isScrollControlled: true,
               showDragHandle: true,
-              builder: (_) => ComboLineForm(
-                onSubmit: (r) => controller.addRange(
-                  start: r.start,
-                  end: r.end,
-                  amount: r.amount,
-                ),
+              builder: (ctx) => ComboLineForm(
+                onSubmit: (r) {
+                  controller.addRange(
+                    start: r.start,
+                    end: r.end,
+                    amount: r.amount,
+                  );
+                  Navigator.of(ctx).pop();
+                },
               ),
             ),
           ),
@@ -888,9 +889,11 @@ class _ComboGameView extends ConsumerWidget {
               context: context,
               isScrollControlled: true,
               showDragHandle: true,
-              builder: (_) => ComboRandomForm(
-                onSubmit: (r) =>
-                    controller.addRandom(count: r.count, amount: r.amount),
+              builder: (ctx) => ComboRandomForm(
+                onSubmit: (r) {
+                  controller.addRandom(count: r.count, amount: r.amount);
+                  Navigator.of(ctx).pop();
+                },
               ),
             ),
           ),
@@ -963,13 +966,16 @@ class _Gana3GameView extends ConsumerWidget {
               context: context,
               isScrollControlled: true,
               showDragHandle: true,
-              builder: (_) => Gana3LineForm(
-                onSubmit: (r) => controller.addRange(
-                  start: r.start,
-                  end: r.end,
-                  amount: r.amount,
-                  isExact: r.isExact,
-                ),
+              builder: (ctx) => Gana3LineForm(
+                onSubmit: (r) {
+                  controller.addRange(
+                    start: r.start,
+                    end: r.end,
+                    amount: r.amount,
+                    isExact: r.isExact,
+                  );
+                  Navigator.of(ctx).pop();
+                },
               ),
             ),
           ),
@@ -980,12 +986,15 @@ class _Gana3GameView extends ConsumerWidget {
               context: context,
               isScrollControlled: true,
               showDragHandle: true,
-              builder: (_) => Gana3RandomForm(
-                onSubmit: (r) => controller.addRandom(
-                  count: r.count,
-                  amount: r.amount,
-                  isExact: r.isExact,
-                ),
+              builder: (ctx) => Gana3RandomForm(
+                onSubmit: (r) {
+                  controller.addRandom(
+                    count: r.count,
+                    amount: r.amount,
+                    isExact: r.isExact,
+                  );
+                  Navigator.of(ctx).pop();
+                },
               ),
             ),
           ),
