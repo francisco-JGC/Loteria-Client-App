@@ -24,6 +24,9 @@ import '../../features/printer/domain/usecases/disconnect_printer.dart';
 import '../../features/printer/domain/usecases/get_paired_printers.dart';
 import '../../features/printer/domain/usecases/print_test.dart';
 import '../../features/printer/domain/usecases/print_ticket.dart';
+import '../../features/results/data/datasources/results_remote_datasource.dart';
+import '../../features/results/data/repositories/results_repository_impl.dart';
+import '../../features/results/domain/repositories/results_repository.dart';
 import '../../features/sale_points/data/datasources/sale_points_local_datasource.dart';
 import '../../features/sale_points/data/datasources/sale_points_remote_datasource.dart';
 import '../../features/sale_points/data/repositories/sale_points_repository_impl.dart';
@@ -70,6 +73,7 @@ Future<void> configureDependencies() async {
   _registerGamesFeature();
   _registerSalePointsFeature();
   _registerTicketsFeature();
+  _registerResultsFeature();
   _registerSettingsFeature();
   _registerPrinterFeature();
 }
@@ -139,6 +143,16 @@ void _registerTicketsFeature() {
     )
     ..registerFactory<VoidMyTicket>(
       () => VoidMyTicket(repository: getIt()),
+    );
+}
+
+void _registerResultsFeature() {
+  getIt
+    ..registerLazySingleton<ResultsRemoteDatasource>(
+      () => ResultsRemoteDatasourceImpl(client: getIt()),
+    )
+    ..registerLazySingleton<ResultsRepository>(
+      () => ResultsRepositoryImpl(remote: getIt()),
     );
 }
 
