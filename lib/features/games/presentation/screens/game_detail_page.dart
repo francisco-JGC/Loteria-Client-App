@@ -10,15 +10,20 @@ import '../../../sales/presentation/state/cart_controller.dart';
 import '../../../sales/presentation/state/cart_state.dart';
 import '../../../sales/presentation/state/date_cart_controller.dart';
 import '../../../sales/presentation/state/date_cart_state.dart';
+import '../../../sales/presentation/state/gana3_cart_controller.dart';
+import '../../../sales/presentation/state/gana3_cart_state.dart';
 import '../../../sales/presentation/widgets/bet_tile.dart';
 import '../../../sales/presentation/widgets/date_bet_tile.dart';
+import '../../../sales/presentation/widgets/gana3_bet_tile.dart';
 import '../../../sales/presentation/widgets/line_form.dart';
 import '../../../sales/presentation/widgets/quick_bet_form.dart';
 import '../../../sales/presentation/widgets/quick_date_bet_form.dart';
+import '../../../sales/presentation/widgets/quick_gana3_bet_form.dart';
 import '../../../sales/presentation/widgets/random_form.dart';
 import '../../domain/entities/game.dart';
 
 const String _kDateGameId = 'fechas';
+const String _kGana3GameId = 'gana3';
 
 class GameDetailPage extends ConsumerWidget {
   const GameDetailPage({required this.gameId, this.game, super.key});
@@ -37,6 +42,9 @@ class GameDetailPage extends ConsumerWidget {
     }
     if (resolved.id == _kDateGameId) {
       return _DateGameView(game: resolved);
+    }
+    if (resolved.id == _kGana3GameId) {
+      return _Gana3GameView(game: resolved);
     }
     return _RegularGameView(game: resolved);
   }
@@ -204,6 +212,64 @@ class _DateGameView extends ConsumerWidget {
   }
 }
 
+class _Gana3GameView extends ConsumerWidget {
+  const _Gana3GameView({required this.game});
+
+  final Game game;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cart = ref.watch(gana3CartControllerProvider(game.id));
+    final controller =
+        ref.read(gana3CartControllerProvider(game.id).notifier);
+    final printerState = ref.watch(printerControllerProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(game.name),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_sweep_outlined),
+            tooltip: 'Limpiar carrito',
+            onPressed: cart.isEmpty
+                ? null
+                : () => _confirmClear(context, controller.clear),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          QuickGana3BetForm(onSubmit: controller.addSingle),
+          Expanded(
+            child: cart.isEmpty
+                ? const _EmptyView(
+                    icon: Icons.tag,
+                    label: 'Aún no hay números registrados',
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: cart.bets.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (_, i) => Gana3BetTile(
+                      bet: cart.bets[i],
+                      onRemove: () => controller.removeAt(i),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: cart.isEmpty
+          ? null
+          : _TotalBar(
+              total: cart.total,
+              numberCount: cart.count,
+              isPrinting: printerState.isPrinting,
+              onPrint: () => _printGana3(context, ref, game, cart),
+            ),
+    );
+  }
+}
+
 Future<void> _confirmClear(
   BuildContext context,
   VoidCallback onConfirm,
@@ -255,6 +321,36 @@ Future<void> _printRegular(
     payload,
     onSuccess: () =>
         ref.read(cartControllerProvider(game.id).notifier).clear(),
+  );
+}
+
+Future<void> _printGana3(
+  BuildContext context,
+  WidgetRef ref,
+  Game game,
+  Gana3CartState cart,
+) async {
+  final payload = TicketPayload(
+    gameId: game.id,
+    gameName: game.name,
+    lines: cart.bets
+        .map((b) => TicketLine(
+              number: b.isExact ? b.numberLabel : '${b.numberLabel} (F)',
+              amount: b.amount,
+              prize: b.prize,
+            ))
+        .toList(),
+    folio: _generateFolio(),
+    date: DateTime.now(),
+    seller: ref.read(currentUserProvider).name,
+    client: cart.client,
+  );
+  await _sendToPrinter(
+    context,
+    ref,
+    payload,
+    onSuccess: () =>
+        ref.read(gana3CartControllerProvider(game.id).notifier).clear(),
   );
 }
 
