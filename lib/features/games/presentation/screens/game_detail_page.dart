@@ -122,16 +122,15 @@ class _RegularGameView extends ConsumerWidget {
                     ),
                   ),
           ),
-        ],
-      ),
-      bottomNavigationBar: cart.isEmpty
-          ? null
-          : _TotalBar(
+          if (cart.isNotEmpty)
+            _TotalBar(
               total: cart.total,
               numberCount: cart.count,
               isPrinting: printerState.isPrinting,
               onPrint: () => _printRegular(context, ref, game, cart),
             ),
+        ],
+      ),
     );
   }
 
@@ -237,16 +236,15 @@ class _DateGameView extends ConsumerWidget {
                     ),
                   ),
           ),
-        ],
-      ),
-      bottomNavigationBar: cart.isEmpty
-          ? null
-          : _TotalBar(
+          if (cart.isNotEmpty)
+            _TotalBar(
               total: cart.total,
               numberCount: cart.count,
               isPrinting: printerState.isPrinting,
               onPrint: () => _printDates(context, ref, game, cart),
             ),
+        ],
+      ),
     );
   }
 }
@@ -331,20 +329,18 @@ class _MultiSorteoGameViewState
                 }
               }),
             ),
+            if (cartSummary != null &&
+                !cartSummary.isEmpty &&
+                _selectedDrawAts.isNotEmpty)
+              _MultiTotalBar(
+                total: cartSummary.total * _selectedDrawAts.length,
+                ticketCount: _selectedDrawAts.length,
+                isPrinting: printerState.isPrinting,
+                onPrint: () => _printMultiSorteoDraws(sub),
+              ),
           ],
         ],
       ),
-      bottomNavigationBar: (sub == null ||
-              cartSummary == null ||
-              cartSummary.isEmpty ||
-              _selectedDrawAts.isEmpty)
-          ? null
-          : _MultiTotalBar(
-              total: cartSummary.total * _selectedDrawAts.length,
-              ticketCount: _selectedDrawAts.length,
-              isPrinting: printerState.isPrinting,
-              onPrint: () => _printMultiSorteoDraws(sub),
-            ),
     );
   }
 
@@ -935,16 +931,15 @@ class _ComboGameView extends ConsumerWidget {
                     ),
                   ),
           ),
-        ],
-      ),
-      bottomNavigationBar: cart.isEmpty
-          ? null
-          : _TotalBar(
+          if (cart.isNotEmpty)
+            _TotalBar(
               total: cart.total,
               numberCount: cart.count,
               isPrinting: printerState.isPrinting,
               onPrint: () => _printCombo(context, ref, game, cart),
             ),
+        ],
+      ),
     );
   }
 }
@@ -1031,16 +1026,15 @@ class _Gana3GameView extends ConsumerWidget {
                     ),
                   ),
           ),
-        ],
-      ),
-      bottomNavigationBar: cart.isEmpty
-          ? null
-          : _TotalBar(
+          if (cart.isNotEmpty)
+            _TotalBar(
               total: cart.total,
               numberCount: cart.count,
               isPrinting: printerState.isPrinting,
               onPrint: () => _printGana3(context, ref, game, cart),
             ),
+        ],
+      ),
     );
   }
 }
