@@ -7,16 +7,18 @@ class TicketLine extends Equatable {
     required this.number,
     required this.amount,
     required this.prize,
+    this.subGameName,
   });
 
   final String number;
   final int amount;
   final int prize;
+  final String? subGameName;
 
-  Map<String, dynamic> toQrMap() => {'n': number, 'a': amount};
+  List<dynamic> toQrEntry() => [number, amount];
 
   @override
-  List<Object?> get props => [number, amount, prize];
+  List<Object?> get props => [number, amount, prize, subGameName];
 }
 
 class TicketPayload extends Equatable {
@@ -48,11 +50,22 @@ class TicketPayload extends Equatable {
     return jsonEncode({
       'g': gameId,
       'f': folio,
-      'd': date.toIso8601String(),
-      if (seller != null) 's': seller,
-      if (client != null) 'c': client,
-      'b': lines.map((l) => l.toQrMap()).toList(),
+      if (client != null) 'c': _ascii(client!),
+      'b': lines.map((l) => l.toQrEntry()).toList(),
     });
+  }
+
+  static String _ascii(String value) {
+    const map = {
+      'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
+      'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U',
+      'ñ': 'n', 'Ñ': 'N', 'ü': 'u', 'Ü': 'U',
+    };
+    final buf = StringBuffer();
+    for (final ch in value.split('')) {
+      buf.write(map[ch] ?? ch);
+    }
+    return buf.toString();
   }
 
   @override

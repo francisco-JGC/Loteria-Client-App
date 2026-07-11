@@ -321,15 +321,7 @@ class _MultiSorteoGameViewState
                     icon: Icons.shuffle,
                     label: 'Aún no hay números registrados',
                   )
-                : ListView.separated(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: cart.bets.length,
-                    separatorBuilder: (_, _) => const Divider(height: 1),
-                    itemBuilder: (_, i) => MultiSorteoBetTile(
-                      bet: cart.bets[i],
-                      onRemove: () => controller.removeAt(i),
-                    ),
-                  ),
+                : _buildGroupedList(cart, controller),
           ),
         ],
       ),
@@ -341,6 +333,34 @@ class _MultiSorteoGameViewState
               isPrinting: printerState.isPrinting,
               onPrint: () => _printMultiSorteo(context, ref, widget.game, cart),
             ),
+    );
+  }
+
+  Widget _buildGroupedList(
+    MultiSorteoCartState cart,
+    MultiSorteoCartController controller,
+  ) {
+    final sorted = cart.bets.asMap().entries.toList()
+      ..sort((a, b) => a.value.subGameName.compareTo(b.value.subGameName));
+
+    final children = <Widget>[];
+    String? current;
+    for (final entry in sorted) {
+      final bet = entry.value;
+      if (bet.subGameName != current) {
+        current = bet.subGameName;
+        children.add(_GroupHeader(name: bet.subGameName));
+      } else {
+        children.add(const Divider(height: 1));
+      }
+      children.add(MultiSorteoBetTile(
+        bet: bet,
+        onRemove: () => controller.removeAt(entry.key),
+      ));
+    }
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      children: children,
     );
   }
 
@@ -597,14 +617,17 @@ Future<void> _printMultiSorteo(
   Game game,
   MultiSorteoCartState cart,
 ) async {
+  final sorted = [...cart.bets]
+    ..sort((a, b) => a.subGameName.compareTo(b.subGameName));
   final payload = TicketPayload(
     gameId: game.id,
     gameName: game.name,
-    lines: cart.bets
+    lines: sorted
         .map((b) => TicketLine(
-              number: '${b.subGameName}: ${b.label}',
+              number: b.label,
               amount: b.amount,
               prize: b.prize,
+              subGameName: b.subGameName,
             ))
         .toList(),
     folio: _generateFolio(),
@@ -747,6 +770,28 @@ Future<void> _sendToPrinter(
 
 String _generateFolio() {
   return DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase();
+}
+
+class _GroupHeader extends StatelessWidget {
+  const _GroupHeader({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Text(
+        name.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: Colors.black54,
+          letterSpacing: 0.6,
+        ),
+      ),
+    );
+  }
 }
 
 class _EmptyView extends StatelessWidget {

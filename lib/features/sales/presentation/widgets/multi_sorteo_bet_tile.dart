@@ -19,31 +19,19 @@ class MultiSorteoBetTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.black54),
-              borderRadius: BorderRadius.circular(6),
-            ),
+          const Icon(Icons.tag, size: 20, color: Colors.black),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 88,
             child: Text(
-              bet.subGameName,
+              bet.label,
               style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
                 color: Colors.black,
               ),
             ),
           ),
-          const SizedBox(width: 10),
-          Text(
-            bet.label,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(width: 10),
           Expanded(
             child: Text(
               kCurrencyFormat.format(bet.amount),

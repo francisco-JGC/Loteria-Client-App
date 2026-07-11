@@ -141,22 +141,29 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
         PosColumn(text: 'Premio', width: 4, styles: infoRight),
         gutter(),
       ]),
-      for (final line in p.lines)
+      for (var i = 0; i < p.lines.length; i++) ...[
+        if (p.lines[i].subGameName != null &&
+            (i == 0 || p.lines[i - 1].subGameName != p.lines[i].subGameName))
+          ...g.text(
+            '  -- ${p.lines[i].subGameName!.toUpperCase()} --',
+            styles: const PosStyles(bold: true),
+          ),
         ...g.row([
           gutter(),
-          PosColumn(text: line.number, width: 3, styles: numberStyle),
+          PosColumn(text: p.lines[i].number, width: 3, styles: numberStyle),
           PosColumn(
-            text: money.format(line.amount),
+            text: money.format(p.lines[i].amount),
             width: 3,
             styles: numberRight,
           ),
           PosColumn(
-            text: money.format(line.prize),
+            text: money.format(p.lines[i].prize),
             width: 4,
             styles: numberRight,
           ),
           gutter(),
         ]),
+      ],
       ...g.hr(),
       ...g.row([
         gutter(),
