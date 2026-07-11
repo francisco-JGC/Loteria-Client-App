@@ -27,8 +27,8 @@ import '../../../sales/presentation/widgets/random_form.dart';
 import '../../domain/entities/game.dart';
 
 const String _kDateGameId = 'fechas';
-const String _kGana3GameId = 'gana3';
 const String _kComboGameId = 'combo';
+const Set<String> _kGana3LikeGameIds = {'gana3', 'juega3', 'tresmonazo'};
 
 class GameDetailPage extends ConsumerWidget {
   const GameDetailPage({required this.gameId, this.game, super.key});
@@ -48,7 +48,7 @@ class GameDetailPage extends ConsumerWidget {
     if (resolved.id == _kDateGameId) {
       return _DateGameView(game: resolved);
     }
-    if (resolved.id == _kGana3GameId) {
+    if (_kGana3LikeGameIds.contains(resolved.id)) {
       return _Gana3GameView(game: resolved);
     }
     if (resolved.id == _kComboGameId) {
