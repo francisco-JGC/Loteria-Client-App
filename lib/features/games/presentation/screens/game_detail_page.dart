@@ -404,25 +404,31 @@ class _SubGameSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      child: DropdownButtonFormField<String>(
-        initialValue: selected?.id,
-        isDense: true,
+      child: InputDecorator(
         decoration: const InputDecoration(
           labelText: 'Juego',
           isDense: true,
           prefixIcon: Icon(Icons.sports_esports),
         ),
-        items: [
-          for (final g in subGames)
-            DropdownMenuItem(value: g.id, child: Text(g.name)),
-        ],
-        onChanged: (id) {
-          final match = subGames.firstWhere(
-            (g) => g.id == id,
-            orElse: () => subGames.first,
-          );
-          onChanged(match);
-        },
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: selected?.id,
+            isExpanded: true,
+            isDense: true,
+            items: [
+              for (final g in subGames)
+                DropdownMenuItem(value: g.id, child: Text(g.name)),
+            ],
+            onChanged: (id) {
+              if (id == null) return;
+              final match = subGames.firstWhere(
+                (g) => g.id == id,
+                orElse: () => subGames.first,
+              );
+              onChanged(match);
+            },
+          ),
+        ),
       ),
     );
   }
