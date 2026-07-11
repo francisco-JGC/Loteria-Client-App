@@ -1,11 +1,11 @@
 import 'package:equatable/equatable.dart';
 
-import '../../domain/entities/bet.dart';
+import '../../domain/entities/date_bet.dart';
 
-class CartState extends Equatable {
-  const CartState({this.bets = const [], this.client});
+class DateCartState extends Equatable {
+  const DateCartState({this.bets = const [], this.client});
 
-  final List<Bet> bets;
+  final List<DateBet> bets;
   final String? client;
 
   bool get isEmpty => bets.isEmpty;

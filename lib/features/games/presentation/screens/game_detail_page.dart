@@ -8,10 +8,17 @@ import '../../../printer/domain/entities/ticket_payload.dart';
 import '../../../printer/presentation/state/printer_controller.dart';
 import '../../../sales/presentation/state/cart_controller.dart';
 import '../../../sales/presentation/state/cart_state.dart';
+import '../../../sales/presentation/state/date_cart_controller.dart';
+import '../../../sales/presentation/state/date_cart_state.dart';
 import '../../../sales/presentation/widgets/bet_tile.dart';
+import '../../../sales/presentation/widgets/date_bet_tile.dart';
 import '../../../sales/presentation/widgets/line_form.dart';
+import '../../../sales/presentation/widgets/quick_bet_form.dart';
+import '../../../sales/presentation/widgets/quick_date_bet_form.dart';
 import '../../../sales/presentation/widgets/random_form.dart';
 import '../../domain/entities/game.dart';
+
+const String _kDateGameId = 'fechas';
 
 class GameDetailPage extends ConsumerWidget {
   const GameDetailPage({required this.gameId, this.game, super.key});
@@ -28,14 +35,27 @@ class GameDetailPage extends ConsumerWidget {
         body: _NotFound(gameId: gameId),
       );
     }
+    if (resolved.id == _kDateGameId) {
+      return _DateGameView(game: resolved);
+    }
+    return _RegularGameView(game: resolved);
+  }
+}
 
-    final cart = ref.watch(cartControllerProvider(resolved.id));
-    final controller = ref.read(cartControllerProvider(resolved.id).notifier);
+class _RegularGameView extends ConsumerWidget {
+  const _RegularGameView({required this.game});
+
+  final Game game;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cart = ref.watch(cartControllerProvider(game.id));
+    final controller = ref.read(cartControllerProvider(game.id).notifier);
     final printerState = ref.watch(printerControllerProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(resolved.name),
+        title: Text(game.name),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_circle_outline),
@@ -50,36 +70,42 @@ class GameDetailPage extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
             tooltip: 'Escanear boleto',
-            onPressed: () =>
-                context.push('/juegos/${resolved.id}/escanear'),
+            onPressed: () => context.push('/juegos/${game.id}/escanear'),
           ),
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
             tooltip: 'Limpiar carrito',
             onPressed: cart.isEmpty
                 ? null
-                : () => _confirmClear(context, controller),
+                : () => _confirmClear(context, controller.clear),
           ),
         ],
       ),
-      body: cart.isEmpty
-          ? const _EmptyView()
-          : ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: cart.bets.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (_, i) => BetTile(
-                bet: cart.bets[i],
-                onRemove: () => controller.removeAt(i),
-              ),
-            ),
+      body: Column(
+        children: [
+          QuickBetForm(onSubmit: controller.addSingle),
+          Expanded(
+            child: cart.isEmpty
+                ? const _EmptyView()
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: cart.bets.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (_, i) => BetTile(
+                      bet: cart.bets[i],
+                      onRemove: () => controller.removeAt(i),
+                    ),
+                  ),
+          ),
+        ],
+      ),
       bottomNavigationBar: cart.isEmpty
           ? null
           : _TotalBar(
               total: cart.total,
               numberCount: cart.count,
               isPrinting: printerState.isPrinting,
-              onPrint: () => _print(context, ref, resolved, cart),
+              onPrint: () => _printRegular(context, ref, game, cart),
             ),
     );
   }
@@ -118,108 +144,211 @@ class GameDetailPage extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Future<void> _confirmClear(
-    BuildContext context,
-    CartController controller,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Limpiar carrito'),
-        content: const Text('¿Descartar todos los números registrados?'),
+class _DateGameView extends ConsumerWidget {
+  const _DateGameView({required this.game});
+
+  final Game game;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cart = ref.watch(dateCartControllerProvider(game.id));
+    final controller =
+        ref.read(dateCartControllerProvider(game.id).notifier);
+    final printerState = ref.watch(printerControllerProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(game.name),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Limpiar'),
+          IconButton(
+            icon: const Icon(Icons.delete_sweep_outlined),
+            tooltip: 'Limpiar carrito',
+            onPressed: cart.isEmpty
+                ? null
+                : () => _confirmClear(context, controller.clear),
           ),
         ],
       ),
-    );
-    if (confirmed ?? false) controller.clear();
-  }
-
-  Future<void> _print(
-    BuildContext context,
-    WidgetRef ref,
-    Game game,
-    CartState cart,
-  ) async {
-    final printerNotifier = ref.read(printerControllerProvider.notifier);
-    final printer = ref.read(printerControllerProvider);
-    final messenger = ScaffoldMessenger.of(context);
-
-    if (!printer.isConnected) {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text(
-            'No hay impresora conectada. Ve a Configuración → Impresora.',
+      body: Column(
+        children: [
+          QuickDateBetForm(onSubmit: controller.addSingle),
+          Expanded(
+            child: cart.isEmpty
+                ? const _EmptyView(
+                    icon: Icons.calendar_month_outlined,
+                    label: 'Aún no hay fechas registradas',
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: cart.bets.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (_, i) => DateBetTile(
+                      bet: cart.bets[i],
+                      onRemove: () => controller.removeAt(i),
+                    ),
+                  ),
           ),
-        ),
-      );
-      return;
-    }
-
-    final user = ref.read(currentUserProvider);
-    final payload = TicketPayload(
-      gameId: game.id,
-      gameName: game.name,
-      lines: cart.bets
-          .map((b) => TicketLine(
-                number: b.numberLabel,
-                amount: b.amount,
-                prize: b.prize,
-              ))
-          .toList(),
-      folio: _generateFolio(),
-      date: DateTime.now(),
-      seller: user.name,
+        ],
+      ),
+      bottomNavigationBar: cart.isEmpty
+          ? null
+          : _TotalBar(
+              total: cart.total,
+              numberCount: cart.count,
+              isPrinting: printerState.isPrinting,
+              onPrint: () => _printDates(context, ref, game, cart),
+            ),
     );
-
-    await printerNotifier.printTicket(payload);
-
-    final after = ref.read(printerControllerProvider);
-    if (after.errorMessage != null) {
-      messenger.showSnackBar(SnackBar(
-        content: Text('Error al imprimir: ${after.errorMessage}'),
-      ));
-      return;
-    }
-
-    ref.read(cartControllerProvider(game.id).notifier).clear();
-    messenger.showSnackBar(
-      const SnackBar(content: Text('Ticket impreso')),
-    );
-  }
-
-  String _generateFolio() {
-    final now = DateTime.now();
-    return now.millisecondsSinceEpoch.toRadixString(36).toUpperCase();
   }
 }
 
+Future<void> _confirmClear(
+  BuildContext context,
+  VoidCallback onConfirm,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('Limpiar carrito'),
+      content: const Text('¿Descartar todos los números registrados?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('Limpiar'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed ?? false) onConfirm();
+}
+
+Future<void> _printRegular(
+  BuildContext context,
+  WidgetRef ref,
+  Game game,
+  CartState cart,
+) async {
+  final payload = TicketPayload(
+    gameId: game.id,
+    gameName: game.name,
+    lines: cart.bets
+        .map((b) => TicketLine(
+              number: b.numberLabel,
+              amount: b.amount,
+              prize: b.prize,
+            ))
+        .toList(),
+    folio: _generateFolio(),
+    date: DateTime.now(),
+    seller: ref.read(currentUserProvider).name,
+    client: cart.client,
+  );
+  await _sendToPrinter(
+    context,
+    ref,
+    payload,
+    onSuccess: () =>
+        ref.read(cartControllerProvider(game.id).notifier).clear(),
+  );
+}
+
+Future<void> _printDates(
+  BuildContext context,
+  WidgetRef ref,
+  Game game,
+  DateCartState cart,
+) async {
+  final payload = TicketPayload(
+    gameId: game.id,
+    gameName: game.name,
+    lines: cart.bets
+        .map((b) => TicketLine(
+              number: b.label,
+              amount: b.amount,
+              prize: b.prize,
+            ))
+        .toList(),
+    folio: _generateFolio(),
+    date: DateTime.now(),
+    seller: ref.read(currentUserProvider).name,
+    client: cart.client,
+  );
+  await _sendToPrinter(
+    context,
+    ref,
+    payload,
+    onSuccess: () =>
+        ref.read(dateCartControllerProvider(game.id).notifier).clear(),
+  );
+}
+
+Future<void> _sendToPrinter(
+  BuildContext context,
+  WidgetRef ref,
+  TicketPayload payload, {
+  required VoidCallback onSuccess,
+}) async {
+  final printerNotifier = ref.read(printerControllerProvider.notifier);
+  final printer = ref.read(printerControllerProvider);
+  final messenger = ScaffoldMessenger.of(context);
+
+  if (!printer.isConnected) {
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text(
+          'No hay impresora conectada. Ve a Configuración → Impresora.',
+        ),
+      ),
+    );
+    return;
+  }
+
+  await printerNotifier.printTicket(payload);
+  final after = ref.read(printerControllerProvider);
+  if (after.errorMessage != null) {
+    messenger.showSnackBar(SnackBar(
+      content: Text('Error al imprimir: ${after.errorMessage}'),
+    ));
+    return;
+  }
+
+  onSuccess();
+  messenger.showSnackBar(const SnackBar(content: Text('Ticket impreso')));
+}
+
+String _generateFolio() {
+  return DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase();
+}
+
 class _EmptyView extends StatelessWidget {
-  const _EmptyView();
+  const _EmptyView({
+    this.icon = Icons.grid_view_outlined,
+    this.label = 'Aún no hay números registrados',
+  });
+
+  final IconData icon;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.grid_view_outlined,
-                size: 64, color: Colors.black26),
-            SizedBox(height: 12),
+            Icon(icon, size: 64, color: Colors.black26),
+            const SizedBox(height: 12),
             Text(
-              'Aún no hay números registrados',
+              label,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 15, color: Colors.black54),
+              style: const TextStyle(fontSize: 15, color: Colors.black54),
             ),
           ],
         ),

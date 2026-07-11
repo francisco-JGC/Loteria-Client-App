@@ -131,6 +131,8 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
       ...g.text('  Folio: ${p.folio}', styles: infoStyle),
       if (p.seller != null)
         ...g.text('  Vendedor: ${p.seller}', styles: infoStyle),
+      if (p.client != null)
+        ...g.text('  Cliente: ${p.client}', styles: infoStyle),
       ...g.hr(),
       ...g.row([
         gutter(),

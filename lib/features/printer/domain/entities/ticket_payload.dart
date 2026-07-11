@@ -27,6 +27,7 @@ class TicketPayload extends Equatable {
     required this.folio,
     required this.date,
     this.seller,
+    this.client,
     this.footer,
   });
 
@@ -36,6 +37,7 @@ class TicketPayload extends Equatable {
   final String folio;
   final DateTime date;
   final String? seller;
+  final String? client;
   final String? footer;
 
   int get total => lines.fold(0, (sum, l) => sum + l.amount);
@@ -48,6 +50,7 @@ class TicketPayload extends Equatable {
       'f': folio,
       'd': date.toIso8601String(),
       if (seller != null) 's': seller,
+      if (client != null) 'c': client,
       'b': lines.map((l) => l.toQrMap()).toList(),
     });
   }
@@ -60,6 +63,7 @@ class TicketPayload extends Equatable {
         folio,
         date,
         seller,
+        client,
         footer,
       ];
 }
