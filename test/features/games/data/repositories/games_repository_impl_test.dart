@@ -1,44 +1,74 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:loteria_client_app/core/errors/failures.dart';
 import 'package:loteria_client_app/features/games/data/datasources/games_local_datasource.dart';
+import 'package:loteria_client_app/features/games/data/datasources/games_remote_datasource.dart';
 import 'package:loteria_client_app/features/games/data/models/game_model.dart';
 import 'package:loteria_client_app/features/games/data/repositories/games_repository_impl.dart';
+import 'package:loteria_client_app/features/games/domain/entities/game_type.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockDatasource extends Mock implements GamesLocalDatasource {}
+class _MockRemote extends Mock implements GamesRemoteDatasource {}
+
+class _MockLocal extends Mock implements GamesLocalDatasource {}
+
+const _sample = GameModel(
+  id: 'uuid-1',
+  slug: 'diaria',
+  name: 'Diaria',
+  type: GameType.regular,
+  mainMultiplier: 80,
+  orderIndex: 1,
+);
 
 void main() {
-  late _MockDatasource datasource;
+  late _MockRemote remote;
+  late _MockLocal local;
   late GamesRepositoryImpl repository;
 
   setUp(() {
-    datasource = _MockDatasource();
-    repository = GamesRepositoryImpl(local: datasource);
+    remote = _MockRemote();
+    local = _MockLocal();
+    repository = GamesRepositoryImpl(remote: remote, local: local);
   });
 
-  test('returns Right with games from datasource', () async {
-    const games = [GameModel(id: 'diaria', name: 'Diaria')];
-    when(() => datasource.getAuthorizedGames())
-        .thenAnswer((_) async => games);
+  test('remote success writes cache and returns sorted games', () async {
+    when(() => remote.fetchGames()).thenAnswer((_) async => const [_sample]);
+    when(() => local.writeCache(any())).thenAnswer((_) async {});
 
     final result = await repository.getAuthorizedGames();
 
     expect(result.isRight(), isTrue);
     result.match(
       (_) => fail('expected Right'),
-      (list) => expect(list, games),
+      (games) => expect(games.map((g) => g.slug), ['diaria']),
     );
+    verify(() => local.writeCache(any())).called(1);
   });
 
-  test('returns Left(UnexpectedFailure) when datasource throws', () async {
-    when(() => datasource.getAuthorizedGames()).thenThrow(Exception('boom'));
+  test('remote failure falls back to cache when available', () async {
+    when(() => remote.fetchGames()).thenThrow(Exception('offline'));
+    when(() => local.readCached()).thenAnswer((_) async => const [_sample]);
 
     final result = await repository.getAuthorizedGames();
 
-    expect(result.isLeft(), isTrue);
+    expect(result.isRight(), isTrue);
     result.match(
-      (f) => expect(f, isA<UnexpectedFailure>()),
-      (_) => fail('expected Left'),
+      (_) => fail('expected Right'),
+      (games) => expect(games.length, 1),
+    );
+    verifyNever(() => local.readFallback());
+  });
+
+  test('remote and cache empty falls back to static list', () async {
+    when(() => remote.fetchGames()).thenThrow(Exception('offline'));
+    when(() => local.readCached()).thenAnswer((_) async => const []);
+    when(() => local.readFallback()).thenAnswer((_) async => const [_sample]);
+
+    final result = await repository.getAuthorizedGames();
+
+    expect(result.isRight(), isTrue);
+    result.match(
+      (_) => fail('expected Right'),
+      (games) => expect(games.map((g) => g.slug), ['diaria']),
     );
   });
 }

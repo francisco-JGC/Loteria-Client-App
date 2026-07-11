@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:loteria_client_app/core/errors/failures.dart';
 import 'package:loteria_client_app/features/games/domain/entities/game.dart';
+import 'package:loteria_client_app/features/games/domain/entities/game_type.dart';
 import 'package:loteria_client_app/features/games/domain/repositories/games_repository.dart';
 import 'package:loteria_client_app/features/games/domain/usecases/get_authorized_games.dart';
 import 'package:mocktail/mocktail.dart';
@@ -18,7 +19,15 @@ void main() {
   });
 
   test('returns games from repository when it succeeds', () async {
-    const games = [Game(id: 'diaria', name: 'Diaria')];
+    const games = [
+      Game(
+        id: 'uuid-1',
+        slug: 'diaria',
+        name: 'Diaria',
+        type: GameType.regular,
+        mainMultiplier: 80,
+      ),
+    ];
     when(() => repository.getAuthorizedGames())
         .thenAnswer((_) async => const Right(games));
 

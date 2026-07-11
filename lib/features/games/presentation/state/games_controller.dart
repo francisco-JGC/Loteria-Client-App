@@ -12,7 +12,7 @@ class GamesController extends AsyncNotifier<List<Game>> {
     final result = await _getAuthorizedGames();
     return result.fold(
       (failure) => throw Exception(failure.message),
-      (games) => games.where((g) => g.isEnabled).toList(),
+      (games) => games.where((g) => g.isActive).toList(),
     );
   }
 

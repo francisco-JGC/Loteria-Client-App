@@ -11,6 +11,7 @@ import '../../features/auth/domain/usecases/load_session.dart';
 import '../../features/auth/domain/usecases/login.dart';
 import '../../features/auth/domain/usecases/logout.dart';
 import '../../features/games/data/datasources/games_local_datasource.dart';
+import '../../features/games/data/datasources/games_remote_datasource.dart';
 import '../../features/games/data/repositories/games_repository_impl.dart';
 import '../../features/games/domain/repositories/games_repository.dart';
 import '../../features/games/domain/usecases/get_authorized_games.dart';
@@ -83,11 +84,14 @@ void _registerAuthFeature() {
 
 void _registerGamesFeature() {
   getIt
+    ..registerLazySingleton<GamesRemoteDatasource>(
+      () => GamesRemoteDatasourceImpl(client: getIt()),
+    )
     ..registerLazySingleton<GamesLocalDatasource>(
-      GamesLocalDatasourceImpl.new,
+      () => GamesLocalDatasourceImpl(prefs: getIt()),
     )
     ..registerLazySingleton<GamesRepository>(
-      () => GamesRepositoryImpl(local: getIt()),
+      () => GamesRepositoryImpl(remote: getIt(), local: getIt()),
     )
     ..registerFactory<GetAuthorizedGames>(
       () => GetAuthorizedGames(repository: getIt()),
