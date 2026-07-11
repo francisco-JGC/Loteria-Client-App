@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
@@ -68,6 +70,24 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
     if (!ok) {
       throw Exception('No fue posible enviar los datos a la impresora');
     }
+  }
+
+  List<int> _safeQrCode(Generator g, String text, {int moduleSize = 6}) {
+    final data = utf8.encode(text);
+    final storeLen = data.length + 3;
+    final pL = storeLen & 0xFF;
+    final pH = (storeLen >> 8) & 0xFF;
+
+    return [
+      ...g.setStyles(const PosStyles(align: PosAlign.center)),
+      0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00,
+      0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, moduleSize,
+      0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x30,
+      0x1D, 0x28, 0x6B, pL, pH, 0x31, 0x50, 0x30,
+      ...data,
+      0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30,
+      ...g.setStyles(const PosStyles(align: PosAlign.left)),
+    ];
   }
 
   Future<List<int>> _buildTestBytes() async {
@@ -194,7 +214,7 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
         styles: const PosStyles(align: PosAlign.center),
       ),
       ...g.feed(1),
-      ...g.qrcode(p.toQrData(), size: QRSize.size6),
+      ..._safeQrCode(g, p.toQrData()),
       ...g.feed(1),
       ...g.text(
         'Folio: ${p.folio}',
