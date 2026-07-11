@@ -269,6 +269,7 @@ class _MultiSorteoGameViewState
     extends ConsumerState<_MultiSorteoGameView> {
   Game? _selectedSubGame;
   final Set<DateTime> _selectedDrawAts = <DateTime>{};
+  bool _isBatchPrinting = false;
 
   @override
   Widget build(BuildContext context) {
@@ -341,7 +342,7 @@ class _MultiSorteoGameViewState
               _MultiTotalBar(
                 total: cartSummary.total * _selectedDrawAts.length,
                 ticketCount: _selectedDrawAts.length,
-                isPrinting: printerState.isPrinting,
+                isPrinting: _isBatchPrinting || printerState.isPrinting,
                 onPrint: () => _printMultiSorteoDraws(sub),
               ),
           ],
@@ -482,29 +483,35 @@ class _MultiSorteoGameViewState
   }
 
   Future<void> _printMultiSorteoDraws(Game sub) async {
-    final draws = _selectedDrawAts.toList()..sort();
-    final messenger = ScaffoldMessenger.of(context);
-    var okCount = 0;
-    for (final drawAt in draws) {
-      final ok = await _printOneForDraw(sub, drawAt);
-      if (!ok) {
-        messenger.showSnackBar(SnackBar(
-          content: Text(
-            'Se generaron $okCount de ${draws.length} tickets. '
-            'Revisa el error del último intento.',
-          ),
-        ));
-        return;
+    if (_isBatchPrinting) return;
+    setState(() => _isBatchPrinting = true);
+    try {
+      final draws = _selectedDrawAts.toList()..sort();
+      final messenger = ScaffoldMessenger.of(context);
+      var okCount = 0;
+      for (final drawAt in draws) {
+        final ok = await _printOneForDraw(sub, drawAt);
+        if (!ok) {
+          messenger.showSnackBar(SnackBar(
+            content: Text(
+              'Se generaron $okCount de ${draws.length} tickets. '
+              'Revisa el error del último intento.',
+            ),
+          ));
+          return;
+        }
+        okCount++;
       }
-      okCount++;
+      if (!mounted) return;
+      _clearCart(sub);
+      _selectedDrawAts.clear();
+      ref.invalidate(availableDrawsProvider(sub.id));
+      messenger.showSnackBar(SnackBar(
+        content: Text('$okCount ticket(s) impreso(s) correctamente'),
+      ));
+    } finally {
+      if (mounted) setState(() => _isBatchPrinting = false);
     }
-    if (!mounted) return;
-    _clearCart(sub);
-    setState(_selectedDrawAts.clear);
-    ref.invalidate(availableDrawsProvider(sub.id));
-    messenger.showSnackBar(SnackBar(
-      content: Text('$okCount ticket(s) impreso(s) correctamente'),
-    ));
   }
 
   Future<bool> _printOneForDraw(Game sub, DateTime drawAt) async {

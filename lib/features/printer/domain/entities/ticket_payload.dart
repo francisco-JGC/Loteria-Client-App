@@ -50,7 +50,10 @@ class TicketPayload extends Equatable {
   int get totalPrize => lines.fold(0, (sum, l) => sum + l.prize);
   int get count => lines.length;
 
-  String toQrData() => id;
+  // Uses uppercase hex without dashes so the ESC/POS QR encoder picks
+  // alphanumeric mode (5.5 bits/char) instead of byte mode (8 bits/char).
+  // The scanner reconstructs the UUID on the way back.
+  String toQrData() => id.replaceAll('-', '').toUpperCase();
 
   @override
   List<Object?> get props => [

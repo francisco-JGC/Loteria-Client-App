@@ -12,9 +12,21 @@ import '../../../games/presentation/state/games_controller.dart';
 import '../../domain/entities/ticket_evaluation.dart';
 import '../../domain/repositories/results_repository.dart';
 
-final _uuidPattern = RegExp(
+final _dashedUuid = RegExp(
   r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
 );
+final _compactUuid = RegExp(r'^[0-9a-fA-F]{32}$');
+
+String? _parseTicketId(String raw) {
+  final v = raw.trim();
+  if (_dashedUuid.hasMatch(v)) return v.toLowerCase();
+  if (_compactUuid.hasMatch(v)) {
+    final s = v.toLowerCase();
+    return '${s.substring(0, 8)}-${s.substring(8, 12)}-'
+        '${s.substring(12, 16)}-${s.substring(16, 20)}-${s.substring(20)}';
+  }
+  return null;
+}
 
 class VerifyTicketPage extends ConsumerStatefulWidget {
   const VerifyTicketPage({super.key});
@@ -41,8 +53,8 @@ class _VerifyTicketPageState extends ConsumerState<VerifyTicketPage> {
         .map((b) => b.rawValue)
         .firstWhere((v) => v != null && v.isNotEmpty, orElse: () => null);
     if (raw == null) return;
-    final id = raw.trim();
-    if (!_uuidPattern.hasMatch(id)) {
+    final id = _parseTicketId(raw);
+    if (id == null) {
       setState(() => _error = 'QR no reconocido');
       return;
     }

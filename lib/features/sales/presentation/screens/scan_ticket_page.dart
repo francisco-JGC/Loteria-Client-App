@@ -41,7 +41,8 @@ class _ScanTicketPageState extends ConsumerState<ScanTicketPage> {
         .firstWhere((v) => v != null && v.isNotEmpty, orElse: () => null);
     if (raw == null) return;
 
-    if (!_looksLikeUuid(raw)) {
+    final id = _parseTicketId(raw);
+    if (id == null) {
       setState(() => _error = 'QR no reconocido');
       return;
     }
@@ -51,7 +52,7 @@ class _ScanTicketPageState extends ConsumerState<ScanTicketPage> {
       _error = null;
     });
 
-    final either = await getIt<TicketsRepository>().findById(raw);
+    final either = await getIt<TicketsRepository>().findById(id);
     if (!mounted) return;
 
     either.match(
@@ -85,12 +86,21 @@ class _ScanTicketPageState extends ConsumerState<ScanTicketPage> {
     );
   }
 
-  bool _looksLikeUuid(String raw) {
+  /// Accepts either a dashed UUID or a 32-char hex string and returns the
+  /// canonical lowercase UUID. Returns null if the input isn't recognizable.
+  String? _parseTicketId(String raw) {
     final v = raw.trim();
-    final uuidPattern = RegExp(
+    final dashed = RegExp(
       r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
     );
-    return uuidPattern.hasMatch(v);
+    if (dashed.hasMatch(v)) return v.toLowerCase();
+    final compact = RegExp(r'^[0-9a-fA-F]{32}$');
+    if (compact.hasMatch(v)) {
+      final s = v.toLowerCase();
+      return '${s.substring(0, 8)}-${s.substring(8, 12)}-'
+          '${s.substring(12, 16)}-${s.substring(16, 20)}-${s.substring(20)}';
+    }
+    return null;
   }
 
   int _loadIntoCart(TicketDetail detail) {
