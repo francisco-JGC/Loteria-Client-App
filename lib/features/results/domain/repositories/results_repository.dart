@@ -2,6 +2,7 @@ import 'package:fpdart/fpdart.dart';
 
 import '../../../../core/errors/failures.dart';
 import '../entities/draw_result.dart';
+import '../entities/ticket_evaluation.dart';
 import '../entities/winning_ticket.dart';
 
 class ListDrawResultsQuery {
@@ -53,4 +54,5 @@ abstract interface class ResultsRepository {
   Future<Either<Failure, List<WinningTicket>>> listWinners(
     ListWinnersQuery query,
   );
+  Future<Either<Failure, TicketEvaluation>> evaluateTicket(String ticketId);
 }

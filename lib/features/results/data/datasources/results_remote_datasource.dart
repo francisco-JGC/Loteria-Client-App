@@ -4,11 +4,13 @@ import '../../../../core/errors/exceptions.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../domain/repositories/results_repository.dart';
 import '../models/draw_result_model.dart';
+import '../models/ticket_evaluation_model.dart';
 import '../models/winning_ticket_model.dart';
 
 abstract interface class ResultsRemoteDatasource {
   Future<List<DrawResultModel>> listResults(ListDrawResultsQuery query);
   Future<List<WinningTicketModel>> listWinners(ListWinnersQuery query);
+  Future<TicketEvaluationModel> evaluateTicket(String ticketId);
 }
 
 class ResultsRemoteDatasourceImpl implements ResultsRemoteDatasource {
@@ -44,6 +46,20 @@ class ResultsRemoteDatasourceImpl implements ResultsRemoteDatasource {
           .map((raw) =>
               WinningTicketModel.fromJson(raw as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  @override
+  Future<TicketEvaluationModel> evaluateTicket(String ticketId) async {
+    try {
+      final response = await client.instance.get<Map<String, dynamic>>(
+        '/tickets/$ticketId/evaluation',
+      );
+      final data = response.data;
+      if (data == null) throw ServerException('Empty response from server');
+      return TicketEvaluationModel.fromJson(data);
     } on DioException catch (e) {
       throw _mapError(e);
     }

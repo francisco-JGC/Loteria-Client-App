@@ -11,6 +11,7 @@ import '../../features/games/presentation/screens/game_detail_page.dart';
 import '../../features/games/presentation/screens/games_page.dart';
 import '../../features/printer/presentation/screens/printer_setup_page.dart';
 import '../../features/results/presentation/screens/latest_results_page.dart';
+import '../../features/results/presentation/screens/verify_ticket_page.dart';
 import '../../features/results/presentation/screens/winners_page.dart';
 import '../../features/sale_points/presentation/screens/select_sale_point_page.dart';
 import '../../features/sale_points/presentation/state/active_sale_point_controller.dart';
@@ -167,6 +168,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
         ],
+      ),
+      GoRoute(
+        path: '/reportes/boletos-ganadores/verificar',
+        builder: (context, state) => const VerifyTicketPage(),
       ),
       GoRoute(
         path: '/reportes/facturas/:id',

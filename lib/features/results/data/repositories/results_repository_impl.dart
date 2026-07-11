@@ -3,6 +3,7 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/draw_result.dart';
+import '../../domain/entities/ticket_evaluation.dart';
 import '../../domain/entities/winning_ticket.dart';
 import '../../domain/repositories/results_repository.dart';
 import '../datasources/results_remote_datasource.dart';
@@ -24,6 +25,11 @@ class ResultsRepositoryImpl implements ResultsRepository {
     ListWinnersQuery query,
   ) {
     return _guard(() => remote.listWinners(query));
+  }
+
+  @override
+  Future<Either<Failure, TicketEvaluation>> evaluateTicket(String ticketId) {
+    return _guard(() => remote.evaluateTicket(ticketId));
   }
 
   Future<Either<Failure, T>> _guard<T>(Future<T> Function() run) async {

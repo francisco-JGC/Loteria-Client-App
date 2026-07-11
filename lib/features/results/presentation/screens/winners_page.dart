@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/utils/currency.dart';
@@ -29,6 +30,12 @@ class WinnersPage extends ConsumerWidget {
                 ref.read(winnersControllerProvider.notifier).refresh(),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.qr_code_scanner),
+        label: const Text('Verificar boleto'),
+        onPressed: () =>
+            context.push('/reportes/boletos-ganadores/verificar'),
       ),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
