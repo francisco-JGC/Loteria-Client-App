@@ -35,28 +35,24 @@ final availableDrawsProvider = FutureProvider.autoDispose
   if (schedules.isEmpty) return const [];
 
   final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final weekday = today.weekday % 7;
   final windows = <AvailableDraw>[];
 
-  for (int offset = 0; offset <= 1; offset++) {
-    final day = DateTime(now.year, now.month, now.day)
-        .add(Duration(days: offset));
-    final weekday = day.weekday % 7;
-    for (final s in schedules) {
-      if (!s.appliesTo(weekday)) continue;
-      final t = s.parsedTime;
-      final drawAt = DateTime(day.year, day.month, day.day, t.hour, t.minute);
-      final lockStart = drawAt.subtract(Duration(minutes: s.cutoffMinutes));
-      final lockEnd =
-          drawAt.add(const Duration(minutes: _postDrawGraceMinutes));
-      // Skip draws that already started their lock window: user can't sell.
-      if (!now.isBefore(lockStart)) continue;
-      windows.add(AvailableDraw(
-        drawAt: drawAt,
-        cutoffMinutes: s.cutoffMinutes,
-        lockStart: lockStart,
-        lockEnd: lockEnd,
-      ));
-    }
+  for (final s in schedules) {
+    if (!s.appliesTo(weekday)) continue;
+    final t = s.parsedTime;
+    final drawAt = DateTime(today.year, today.month, today.day, t.hour, t.minute);
+    final lockStart = drawAt.subtract(Duration(minutes: s.cutoffMinutes));
+    final lockEnd = drawAt.add(const Duration(minutes: _postDrawGraceMinutes));
+    // Skip draws that already started their lock window: user can't sell.
+    if (!now.isBefore(lockStart)) continue;
+    windows.add(AvailableDraw(
+      drawAt: drawAt,
+      cutoffMinutes: s.cutoffMinutes,
+      lockStart: lockStart,
+      lockEnd: lockEnd,
+    ));
   }
 
   windows.sort((a, b) => a.drawAt.compareTo(b.drawAt));

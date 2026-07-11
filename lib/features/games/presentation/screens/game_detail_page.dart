@@ -755,34 +755,30 @@ class _AvailableDrawsSelector extends ConsumerWidget {
             data: (items) {
               if (items.isEmpty) {
                 return const Text(
-                  'No hay sorteos disponibles en las próximas horas.',
+                  'No hay sorteos disponibles hoy.',
                 );
               }
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: items.map((d) {
-                  final isToday = _isToday(d.drawAt);
-                  final label = isToday
-                      ? formatTime12h(d.drawAt)
-                      : '${d.drawAt.day}/${d.drawAt.month} · ${formatTime12h(d.drawAt)}';
-                  return FilterChip(
-                    label: Text(label),
-                    selected: selected.contains(d.drawAt),
-                    onSelected: (_) => onToggle(d.drawAt),
-                  );
-                }).toList(),
+              return ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 110),
+                child: SingleChildScrollView(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: items
+                        .map((d) => FilterChip(
+                              label: Text(formatTime12h(d.drawAt)),
+                              selected: selected.contains(d.drawAt),
+                              onSelected: (_) => onToggle(d.drawAt),
+                            ))
+                        .toList(),
+                  ),
+                ),
               );
             },
           ),
         ],
       ),
     );
-  }
-
-  bool _isToday(DateTime d) {
-    final now = DateTime.now();
-    return d.year == now.year && d.month == now.month && d.day == now.day;
   }
 }
 
