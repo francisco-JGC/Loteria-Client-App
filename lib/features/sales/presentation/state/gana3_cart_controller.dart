@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/gana3_bet.dart';
@@ -25,9 +27,47 @@ class Gana3CartController extends Notifier<Gana3CartState> {
         ...state.bets,
         Gana3Bet(number: number, amount: amount, isExact: isExact),
       ],
-      client: _clean(client),
+      client: _clean(client) ?? state.client,
     );
     return AddBetOutcome.added;
+  }
+
+  void addRange({
+    required int start,
+    required int end,
+    required int amount,
+    required bool isExact,
+  }) {
+    if (start < 0 || end > 999 || end < start) return;
+    if (amount < 1 || amount > 999) return;
+    final newBets = [
+      for (var n = start; n <= end; n++)
+        Gana3Bet(number: n, amount: amount, isExact: isExact),
+    ];
+    state = Gana3CartState(
+      bets: [...state.bets, ...newBets],
+      client: state.client,
+    );
+  }
+
+  void addRandom({
+    required int count,
+    required int amount,
+    required bool isExact,
+  }) {
+    if (count < 1 || amount < 1 || amount > 999) return;
+    final random = math.Random();
+    final numbers = <int>{};
+    while (numbers.length < count.clamp(1, 1000)) {
+      numbers.add(random.nextInt(1000));
+    }
+    final newBets = numbers
+        .map((n) => Gana3Bet(number: n, amount: amount, isExact: isExact))
+        .toList();
+    state = Gana3CartState(
+      bets: [...state.bets, ...newBets],
+      client: state.client,
+    );
   }
 
   void removeAt(int index) {

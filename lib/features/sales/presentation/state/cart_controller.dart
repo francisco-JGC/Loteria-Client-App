@@ -25,7 +25,7 @@ class CartController extends Notifier<CartState> {
     }
     state = CartState(
       bets: [...state.bets, Bet(number: number, amount: amount)],
-      client: _clean(client),
+      client: _clean(client) ?? state.client,
     );
     return AddBetOutcome.added;
   }

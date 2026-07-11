@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/combo_bet.dart';
@@ -21,9 +23,40 @@ class ComboCartController extends Notifier<ComboCartState> {
     if (amount < 1 || amount > 999) return AddBetOutcome.invalid;
     state = ComboCartState(
       bets: [...state.bets, ComboBet(number: number, amount: amount)],
-      client: _clean(client),
+      client: _clean(client) ?? state.client,
     );
     return AddBetOutcome.added;
+  }
+
+  void addRange({
+    required int start,
+    required int end,
+    required int amount,
+  }) {
+    if (start < 0 || end > 9999 || end < start) return;
+    if (amount < 1 || amount > 999) return;
+    final newBets = [
+      for (var n = start; n <= end; n++) ComboBet(number: n, amount: amount),
+    ];
+    state = ComboCartState(
+      bets: [...state.bets, ...newBets],
+      client: state.client,
+    );
+  }
+
+  void addRandom({required int count, required int amount}) {
+    if (count < 1 || amount < 1 || amount > 999) return;
+    final random = math.Random();
+    final numbers = <int>{};
+    while (numbers.length < count.clamp(1, 10000)) {
+      numbers.add(random.nextInt(10000));
+    }
+    final newBets =
+        numbers.map((n) => ComboBet(number: n, amount: amount)).toList();
+    state = ComboCartState(
+      bets: [...state.bets, ...newBets],
+      client: state.client,
+    );
   }
 
   void removeAt(int index) {

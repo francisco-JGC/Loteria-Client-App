@@ -26,9 +26,28 @@ class DateCartController extends Notifier<DateCartState> {
         ...state.bets,
         DateBet(day: day, month: month, amount: amount),
       ],
-      client: _clean(client),
+      client: _clean(client) ?? state.client,
     );
     return AddBetOutcome.added;
+  }
+
+  void addRange({
+    required int dayStart,
+    required int dayEnd,
+    required int month,
+    required int amount,
+  }) {
+    if (dayStart < 1 || dayEnd > 31 || dayEnd < dayStart) return;
+    if (month < 1 || month > 12) return;
+    if (amount < 1 || amount > 999) return;
+    final newBets = [
+      for (var d = dayStart; d <= dayEnd; d++)
+        DateBet(day: d, month: month, amount: amount),
+    ];
+    state = DateCartState(
+      bets: [...state.bets, ...newBets],
+      client: state.client,
+    );
   }
 
   void removeAt(int index) {

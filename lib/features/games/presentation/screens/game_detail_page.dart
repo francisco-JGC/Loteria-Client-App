@@ -18,8 +18,13 @@ import '../../../sales/presentation/state/multi_sorteo_cart_controller.dart';
 import '../../../sales/presentation/state/multi_sorteo_cart_state.dart';
 import '../../../sales/presentation/widgets/bet_tile.dart';
 import '../../../sales/presentation/widgets/combo_bet_tile.dart';
+import '../../../sales/presentation/widgets/combo_line_form.dart';
+import '../../../sales/presentation/widgets/combo_random_form.dart';
 import '../../../sales/presentation/widgets/date_bet_tile.dart';
+import '../../../sales/presentation/widgets/date_line_form.dart';
 import '../../../sales/presentation/widgets/gana3_bet_tile.dart';
+import '../../../sales/presentation/widgets/gana3_line_form.dart';
+import '../../../sales/presentation/widgets/gana3_random_form.dart';
 import '../../../sales/presentation/widgets/line_form.dart';
 import '../../../sales/presentation/widgets/multi_sorteo_bet_tile.dart';
 import '../../../sales/presentation/widgets/quick_bet_form.dart';
@@ -187,6 +192,28 @@ class _DateGameView extends ConsumerWidget {
         title: Text(game.name),
         actions: [
           IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            tooltip: 'Registrar línea',
+            onPressed: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              showDragHandle: true,
+              builder: (_) => DateLineForm(
+                onSubmit: (r) => controller.addRange(
+                  dayStart: r.dayStart,
+                  dayEnd: r.dayEnd,
+                  month: r.month,
+                  amount: r.amount,
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner),
+            tooltip: 'Escanear boleto',
+            onPressed: () => context.push('/juegos/${game.id}/escanear'),
+          ),
+          IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
             tooltip: 'Limpiar carrito',
             onPressed: cart.isEmpty
@@ -284,6 +311,12 @@ class _MultiSorteoGameViewState
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner),
+            tooltip: 'Escanear boleto',
+            onPressed: () =>
+                context.push('/juegos/${widget.game.id}/escanear'),
+          ),
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
             tooltip: 'Limpiar carrito',
@@ -469,6 +502,40 @@ class _ComboGameView extends ConsumerWidget {
         title: Text(game.name),
         actions: [
           IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            tooltip: 'Registrar línea',
+            onPressed: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              showDragHandle: true,
+              builder: (_) => ComboLineForm(
+                onSubmit: (r) => controller.addRange(
+                  start: r.start,
+                  end: r.end,
+                  amount: r.amount,
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.casino_outlined),
+            tooltip: 'Registrar aleatorio',
+            onPressed: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              showDragHandle: true,
+              builder: (_) => ComboRandomForm(
+                onSubmit: (r) =>
+                    controller.addRandom(count: r.count, amount: r.amount),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner),
+            tooltip: 'Escanear boleto',
+            onPressed: () => context.push('/juegos/${game.id}/escanear'),
+          ),
+          IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
             tooltip: 'Limpiar carrito',
             onPressed: cart.isEmpty
@@ -526,6 +593,44 @@ class _Gana3GameView extends ConsumerWidget {
       appBar: AppBar(
         title: Text(game.name),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            tooltip: 'Registrar línea',
+            onPressed: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              showDragHandle: true,
+              builder: (_) => Gana3LineForm(
+                onSubmit: (r) => controller.addRange(
+                  start: r.start,
+                  end: r.end,
+                  amount: r.amount,
+                  isExact: r.isExact,
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.casino_outlined),
+            tooltip: 'Registrar aleatorio',
+            onPressed: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              showDragHandle: true,
+              builder: (_) => Gana3RandomForm(
+                onSubmit: (r) => controller.addRandom(
+                  count: r.count,
+                  amount: r.amount,
+                  isExact: r.isExact,
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner),
+            tooltip: 'Escanear boleto',
+            onPressed: () => context.push('/juegos/${game.id}/escanear'),
+          ),
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
             tooltip: 'Limpiar carrito',
