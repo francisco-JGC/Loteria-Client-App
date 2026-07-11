@@ -715,7 +715,7 @@ Future<void> _printRegular(
         .toList(),
     folio: _generateFolio(),
     date: DateTime.now(),
-    seller: ref.read(currentUserProvider).name,
+    seller: ref.read(currentUserProvider)?.name,
     client: cart.client,
   );
   await _sendToPrinter(
@@ -748,7 +748,7 @@ Future<void> _printMultiSorteo(
         .toList(),
     folio: _generateFolio(),
     date: DateTime.now(),
-    seller: ref.read(currentUserProvider).name,
+    seller: ref.read(currentUserProvider)?.name,
     client: cart.client,
   );
   await _sendToPrinter(
@@ -778,7 +778,7 @@ Future<void> _printCombo(
         .toList(),
     folio: _generateFolio(),
     date: DateTime.now(),
-    seller: ref.read(currentUserProvider).name,
+    seller: ref.read(currentUserProvider)?.name,
     client: cart.client,
   );
   await _sendToPrinter(
@@ -808,7 +808,7 @@ Future<void> _printGana3(
         .toList(),
     folio: _generateFolio(),
     date: DateTime.now(),
-    seller: ref.read(currentUserProvider).name,
+    seller: ref.read(currentUserProvider)?.name,
     client: cart.client,
   );
   await _sendToPrinter(
@@ -838,7 +838,7 @@ Future<void> _printDates(
         .toList(),
     folio: _generateFolio(),
     date: DateTime.now(),
-    seller: ref.read(currentUserProvider).name,
+    seller: ref.read(currentUserProvider)?.name,
     client: cart.client,
   );
   await _sendToPrinter(

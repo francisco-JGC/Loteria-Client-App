@@ -2,16 +2,27 @@ import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logger/logger.dart';
 
+import 'auth_interceptor.dart';
+import 'token_store.dart';
+
 class DioClient {
-  DioClient({Logger? logger}) : _logger = logger ?? Logger() {
+  DioClient({
+    required TokenStore tokenStore,
+    Logger? logger,
+    void Function()? onUnauthorized,
+  }) : _logger = logger ?? Logger() {
     _dio = Dio(
       BaseOptions(
-        baseUrl: dotenv.maybeGet('API_BASE_URL') ?? '',
+        baseUrl: _baseUrl(),
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 20),
         sendTimeout: const Duration(seconds: 20),
         headers: {'Content-Type': 'application/json'},
       ),
+    );
+
+    _dio.interceptors.add(
+      AuthInterceptor(tokenStore: tokenStore, onUnauthorized: onUnauthorized),
     );
 
     _dio.interceptors.add(
@@ -39,4 +50,12 @@ class DioClient {
   final Logger _logger;
 
   Dio get instance => _dio;
+
+  static String _baseUrl() {
+    try {
+      return dotenv.maybeGet('API_BASE_URL') ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
 }

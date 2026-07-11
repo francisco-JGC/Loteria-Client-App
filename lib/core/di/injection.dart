@@ -1,7 +1,15 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../features/auth/data/datasources/auth_local_datasource.dart';
+import '../../features/auth/data/datasources/auth_remote_datasource.dart';
+import '../../features/auth/data/repositories/auth_repository_impl.dart';
+import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/auth/domain/usecases/load_session.dart';
+import '../../features/auth/domain/usecases/login.dart';
+import '../../features/auth/domain/usecases/logout.dart';
 import '../../features/games/data/datasources/games_local_datasource.dart';
 import '../../features/games/data/repositories/games_repository_impl.dart';
 import '../../features/games/domain/repositories/games_repository.dart';
@@ -21,6 +29,8 @@ import '../../features/settings/domain/repositories/settings_repository.dart';
 import '../../features/settings/domain/usecases/get_billing_method.dart';
 import '../../features/settings/domain/usecases/set_billing_method.dart';
 import '../network/dio_client.dart';
+import '../network/session_events.dart';
+import '../network/token_store.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -30,11 +40,45 @@ Future<void> configureDependencies() async {
   final prefs = await SharedPreferences.getInstance();
   getIt.registerSingleton<SharedPreferences>(prefs);
 
-  getIt.registerLazySingleton<DioClient>(() => DioClient(logger: getIt()));
+  getIt.registerLazySingleton<FlutterSecureStorage>(
+    () => const FlutterSecureStorage(),
+  );
 
+  getIt.registerLazySingleton<TokenStore>(TokenStore.new);
+  getIt.registerLazySingleton<SessionEvents>(SessionEvents.new);
+
+  getIt.registerLazySingleton<DioClient>(
+    () => DioClient(
+      tokenStore: getIt(),
+      logger: getIt(),
+      onUnauthorized: () => getIt<SessionEvents>().emitExpired(),
+    ),
+  );
+
+  _registerAuthFeature();
   _registerGamesFeature();
   _registerSettingsFeature();
   _registerPrinterFeature();
+}
+
+void _registerAuthFeature() {
+  getIt
+    ..registerLazySingleton<AuthRemoteDatasource>(
+      () => AuthRemoteDatasourceImpl(client: getIt()),
+    )
+    ..registerLazySingleton<AuthLocalDatasource>(
+      () => AuthLocalDatasourceImpl(storage: getIt()),
+    )
+    ..registerLazySingleton<AuthRepository>(
+      () => AuthRepositoryImpl(
+        remote: getIt(),
+        local: getIt(),
+        tokenStore: getIt(),
+      ),
+    )
+    ..registerFactory<Login>(() => Login(repository: getIt()))
+    ..registerFactory<Logout>(() => Logout(repository: getIt()))
+    ..registerFactory<LoadSession>(() => LoadSession(repository: getIt()));
 }
 
 void _registerGamesFeature() {

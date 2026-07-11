@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/domain/entities/user_role.dart';
 import '../navigation/nav_item.dart';
 import '../navigation/nav_items.dart';
 import '../session/current_user.dart';
@@ -19,7 +20,10 @@ class AppDrawer extends ConsumerWidget {
       child: SafeArea(
         child: Column(
           children: [
-            _UserHeader(name: user.name, role: user.role),
+            _UserHeader(
+              name: user?.name ?? '—',
+              role: _roleLabel(user?.role),
+            ),
             const Divider(height: 1),
             Expanded(
               child: ListView(
@@ -43,6 +47,17 @@ class AppDrawer extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _roleLabel(UserRole? role) {
+    switch (role) {
+      case UserRole.admin:
+        return 'Administrador';
+      case UserRole.seller:
+        return 'Vendedor';
+      case null:
+        return '—';
+    }
   }
 }
 
