@@ -148,7 +148,11 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
       ),
       ...g.hr(),
       ...g.text('  Fecha: ${dateFmt.format(p.date)}', styles: infoStyle),
-      ...g.text('  Folio: ${p.folio}', styles: infoStyle),
+      if (p.drawAt != null)
+        ...g.text(
+          '  Sorteo: ${dateFmt.format(p.drawAt!.toLocal())}',
+          styles: infoStyle,
+        ),
       if (p.seller != null)
         ...g.text('  Vendedor: ${p.seller}', styles: infoStyle),
       if (p.client != null)

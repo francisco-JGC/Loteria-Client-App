@@ -24,11 +24,19 @@ import '../../features/printer/domain/usecases/disconnect_printer.dart';
 import '../../features/printer/domain/usecases/get_paired_printers.dart';
 import '../../features/printer/domain/usecases/print_test.dart';
 import '../../features/printer/domain/usecases/print_ticket.dart';
+import '../../features/sale_points/data/datasources/sale_points_local_datasource.dart';
+import '../../features/sale_points/data/datasources/sale_points_remote_datasource.dart';
+import '../../features/sale_points/data/repositories/sale_points_repository_impl.dart';
+import '../../features/sale_points/domain/repositories/sale_points_repository.dart';
 import '../../features/settings/data/datasources/settings_local_datasource.dart';
 import '../../features/settings/data/repositories/settings_repository_impl.dart';
 import '../../features/settings/domain/repositories/settings_repository.dart';
 import '../../features/settings/domain/usecases/get_billing_method.dart';
 import '../../features/settings/domain/usecases/set_billing_method.dart';
+import '../../features/tickets/data/datasources/tickets_remote_datasource.dart';
+import '../../features/tickets/data/repositories/tickets_repository_impl.dart';
+import '../../features/tickets/domain/repositories/tickets_repository.dart';
+import '../../features/tickets/domain/usecases/create_ticket.dart';
 import '../network/dio_client.dart';
 import '../network/session_events.dart';
 import '../network/token_store.dart';
@@ -58,6 +66,8 @@ Future<void> configureDependencies() async {
 
   _registerAuthFeature();
   _registerGamesFeature();
+  _registerSalePointsFeature();
+  _registerTicketsFeature();
   _registerSettingsFeature();
   _registerPrinterFeature();
 }
@@ -95,6 +105,32 @@ void _registerGamesFeature() {
     )
     ..registerFactory<GetAuthorizedGames>(
       () => GetAuthorizedGames(repository: getIt()),
+    );
+}
+
+void _registerSalePointsFeature() {
+  getIt
+    ..registerLazySingleton<SalePointsRemoteDatasource>(
+      () => SalePointsRemoteDatasourceImpl(client: getIt()),
+    )
+    ..registerLazySingleton<SalePointsLocalDatasource>(
+      () => SalePointsLocalDatasourceImpl(prefs: getIt()),
+    )
+    ..registerLazySingleton<SalePointsRepository>(
+      () => SalePointsRepositoryImpl(remote: getIt(), local: getIt()),
+    );
+}
+
+void _registerTicketsFeature() {
+  getIt
+    ..registerLazySingleton<TicketsRemoteDatasource>(
+      () => TicketsRemoteDatasourceImpl(client: getIt()),
+    )
+    ..registerLazySingleton<TicketsRepository>(
+      () => TicketsRepositoryImpl(remote: getIt()),
+    )
+    ..registerFactory<CreateTicket>(
+      () => CreateTicket(repository: getIt()),
     );
 }
 

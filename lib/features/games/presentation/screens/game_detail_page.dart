@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
+import '../../../../core/di/injection.dart';
 import '../../../../core/session/current_user.dart';
 import '../../../../core/utils/currency.dart';
 import '../../../printer/domain/entities/ticket_payload.dart';
 import '../../../printer/presentation/state/printer_controller.dart';
+import '../../../sale_points/presentation/state/active_sale_point_controller.dart';
 import '../../../sales/presentation/state/cart_controller.dart';
 import '../../../sales/presentation/state/cart_state.dart';
 import '../../../sales/presentation/state/combo_cart_controller.dart';
@@ -32,6 +35,9 @@ import '../../../sales/presentation/widgets/quick_combo_bet_form.dart';
 import '../../../sales/presentation/widgets/quick_date_bet_form.dart';
 import '../../../sales/presentation/widgets/quick_gana3_bet_form.dart';
 import '../../../sales/presentation/widgets/random_form.dart';
+import '../../../tickets/domain/entities/create_ticket_request.dart';
+import '../../../tickets/domain/entities/ticket_receipt.dart';
+import '../../../tickets/domain/usecases/create_ticket.dart';
 import '../../domain/entities/game.dart';
 import '../../domain/entities/game_type.dart';
 import '../state/games_controller.dart';
@@ -698,26 +704,39 @@ Future<void> _printRegular(
   Game game,
   CartState cart,
 ) async {
-  final payload = TicketPayload(
-    gameId: game.id,
-    gameSlug: game.slug,
-    gameName: game.name,
-    lines: cart.bets
-        .map((b) => TicketLine(
-              number: b.numberLabel,
-              amount: b.amount,
-              prize: b.prize,
-            ))
-        .toList(),
-    folio: _generateFolio(),
-    date: DateTime.now(),
-    seller: ref.read(currentUserProvider)?.name,
-    client: cart.client,
-  );
-  await _sendToPrinter(
+  final lines = cart.bets
+      .map((b) => (
+            label: b.numberLabel,
+            amount: b.amount,
+            prize: b.prize,
+            subGameId: null as String?,
+            subGameName: null as String?,
+          ))
+      .toList();
+
+  await _persistAndPrint(
     context,
     ref,
-    payload,
+    game: game,
+    client: cart.client,
+    lines: lines,
+    buildPayload: (receipt) => TicketPayload(
+      gameId: game.id,
+      gameSlug: game.slug,
+      gameName: game.name,
+      lines: cart.bets
+          .map((b) => TicketLine(
+                number: b.numberLabel,
+                amount: b.amount,
+                prize: b.prize,
+              ))
+          .toList(),
+      folio: receipt.folio,
+      date: DateTime.now(),
+      drawAt: receipt.drawAt,
+      seller: ref.read(currentUserProvider)?.name,
+      client: cart.client,
+    ),
     onSuccess: () =>
         ref.read(cartControllerProvider(game.id).notifier).clear(),
   );
@@ -731,27 +750,40 @@ Future<void> _printMultiSorteo(
 ) async {
   final sorted = [...cart.bets]
     ..sort((a, b) => a.subGameName.compareTo(b.subGameName));
-  final payload = TicketPayload(
-    gameId: game.id,
-    gameSlug: game.slug,
-    gameName: game.name,
-    lines: sorted
-        .map((b) => TicketLine(
-              number: b.label,
-              amount: b.amount,
-              prize: b.prize,
-              subGameName: b.subGameName,
-            ))
-        .toList(),
-    folio: _generateFolio(),
-    date: DateTime.now(),
-    seller: ref.read(currentUserProvider)?.name,
-    client: cart.client,
-  );
-  await _sendToPrinter(
+  final lines = sorted
+      .map((b) => (
+            label: b.label,
+            amount: b.amount,
+            prize: b.prize,
+            subGameId: null as String?,
+            subGameName: b.subGameName as String?,
+          ))
+      .toList();
+
+  await _persistAndPrint(
     context,
     ref,
-    payload,
+    game: game,
+    client: cart.client,
+    lines: lines,
+    buildPayload: (receipt) => TicketPayload(
+      gameId: game.id,
+      gameSlug: game.slug,
+      gameName: game.name,
+      lines: sorted
+          .map((b) => TicketLine(
+                number: b.label,
+                amount: b.amount,
+                prize: b.prize,
+                subGameName: b.subGameName,
+              ))
+          .toList(),
+      folio: receipt.folio,
+      date: DateTime.now(),
+      drawAt: receipt.drawAt,
+      seller: ref.read(currentUserProvider)?.name,
+      client: cart.client,
+    ),
     onSuccess: () =>
         ref.read(multiSorteoCartControllerProvider(game.id).notifier).clear(),
   );
@@ -763,26 +795,39 @@ Future<void> _printCombo(
   Game game,
   ComboCartState cart,
 ) async {
-  final payload = TicketPayload(
-    gameId: game.id,
-    gameSlug: game.slug,
-    gameName: game.name,
-    lines: cart.bets
-        .map((b) => TicketLine(
-              number: b.numberLabel,
-              amount: b.amount,
-              prize: b.prize,
-            ))
-        .toList(),
-    folio: _generateFolio(),
-    date: DateTime.now(),
-    seller: ref.read(currentUserProvider)?.name,
-    client: cart.client,
-  );
-  await _sendToPrinter(
+  final lines = cart.bets
+      .map((b) => (
+            label: b.numberLabel,
+            amount: b.amount,
+            prize: b.prize,
+            subGameId: null as String?,
+            subGameName: null as String?,
+          ))
+      .toList();
+
+  await _persistAndPrint(
     context,
     ref,
-    payload,
+    game: game,
+    client: cart.client,
+    lines: lines,
+    buildPayload: (receipt) => TicketPayload(
+      gameId: game.id,
+      gameSlug: game.slug,
+      gameName: game.name,
+      lines: cart.bets
+          .map((b) => TicketLine(
+                number: b.numberLabel,
+                amount: b.amount,
+                prize: b.prize,
+              ))
+          .toList(),
+      folio: receipt.folio,
+      date: DateTime.now(),
+      drawAt: receipt.drawAt,
+      seller: ref.read(currentUserProvider)?.name,
+      client: cart.client,
+    ),
     onSuccess: () =>
         ref.read(comboCartControllerProvider(game.id).notifier).clear(),
   );
@@ -794,26 +839,39 @@ Future<void> _printGana3(
   Game game,
   Gana3CartState cart,
 ) async {
-  final payload = TicketPayload(
-    gameId: game.id,
-    gameSlug: game.slug,
-    gameName: game.name,
-    lines: cart.bets
-        .map((b) => TicketLine(
-              number: b.isExact ? b.numberLabel : '${b.numberLabel} (F)',
-              amount: b.amount,
-              prize: b.prize,
-            ))
-        .toList(),
-    folio: _generateFolio(),
-    date: DateTime.now(),
-    seller: ref.read(currentUserProvider)?.name,
-    client: cart.client,
-  );
-  await _sendToPrinter(
+  final lines = cart.bets
+      .map((b) => (
+            label: b.isExact ? b.numberLabel : '${b.numberLabel} (F)',
+            amount: b.amount,
+            prize: b.prize,
+            subGameId: null as String?,
+            subGameName: null as String?,
+          ))
+      .toList();
+
+  await _persistAndPrint(
     context,
     ref,
-    payload,
+    game: game,
+    client: cart.client,
+    lines: lines,
+    buildPayload: (receipt) => TicketPayload(
+      gameId: game.id,
+      gameSlug: game.slug,
+      gameName: game.name,
+      lines: cart.bets
+          .map((b) => TicketLine(
+                number: b.isExact ? b.numberLabel : '${b.numberLabel} (F)',
+                amount: b.amount,
+                prize: b.prize,
+              ))
+          .toList(),
+      folio: receipt.folio,
+      date: DateTime.now(),
+      drawAt: receipt.drawAt,
+      seller: ref.read(currentUserProvider)?.name,
+      client: cart.client,
+    ),
     onSuccess: () =>
         ref.read(gana3CartControllerProvider(game.id).notifier).clear(),
   );
@@ -825,67 +883,123 @@ Future<void> _printDates(
   Game game,
   DateCartState cart,
 ) async {
-  final payload = TicketPayload(
-    gameId: game.id,
-    gameSlug: game.slug,
-    gameName: game.name,
-    lines: cart.bets
-        .map((b) => TicketLine(
-              number: b.label,
-              amount: b.amount,
-              prize: b.prize,
-            ))
-        .toList(),
-    folio: _generateFolio(),
-    date: DateTime.now(),
-    seller: ref.read(currentUserProvider)?.name,
-    client: cart.client,
-  );
-  await _sendToPrinter(
+  final lines = cart.bets
+      .map((b) => (
+            label: b.label,
+            amount: b.amount,
+            prize: b.prize,
+            subGameId: null as String?,
+            subGameName: null as String?,
+          ))
+      .toList();
+
+  await _persistAndPrint(
     context,
     ref,
-    payload,
+    game: game,
+    client: cart.client,
+    lines: lines,
+    buildPayload: (receipt) => TicketPayload(
+      gameId: game.id,
+      gameSlug: game.slug,
+      gameName: game.name,
+      lines: cart.bets
+          .map((b) => TicketLine(
+                number: b.label,
+                amount: b.amount,
+                prize: b.prize,
+              ))
+          .toList(),
+      folio: receipt.folio,
+      date: DateTime.now(),
+      drawAt: receipt.drawAt,
+      seller: ref.read(currentUserProvider)?.name,
+      client: cart.client,
+    ),
     onSuccess: () =>
         ref.read(dateCartControllerProvider(game.id).notifier).clear(),
   );
 }
 
-Future<void> _sendToPrinter(
+typedef _RequestLine = ({
+  String label,
+  int amount,
+  int prize,
+  String? subGameId,
+  String? subGameName,
+});
+
+Future<void> _persistAndPrint(
   BuildContext context,
-  WidgetRef ref,
-  TicketPayload payload, {
+  WidgetRef ref, {
+  required Game game,
+  required String? client,
+  required List<_RequestLine> lines,
+  required TicketPayload Function(TicketReceipt) buildPayload,
   required VoidCallback onSuccess,
 }) async {
-  final printerNotifier = ref.read(printerControllerProvider.notifier);
-  final printer = ref.read(printerControllerProvider);
   final messenger = ScaffoldMessenger.of(context);
+  final printer = ref.read(printerControllerProvider);
+  final salePoint = ref.read(activeSalePointProvider).selected;
 
+  if (salePoint == null) {
+    messenger.showSnackBar(const SnackBar(
+      content: Text('No hay puesto de venta activo.'),
+    ));
+    return;
+  }
   if (!printer.isConnected) {
-    messenger.showSnackBar(
-      const SnackBar(
-        content: Text(
-          'No hay impresora conectada. Ve a Configuración → Impresora.',
-        ),
+    messenger.showSnackBar(const SnackBar(
+      content: Text(
+        'No hay impresora conectada. Ve a Configuración → Impresora.',
       ),
-    );
+    ));
     return;
   }
 
-  await printerNotifier.printTicket(payload);
+  final request = CreateTicketRequest(
+    gameId: game.id,
+    salePointId: salePoint.id,
+    client: client,
+    lines: lines
+        .map((l) => CreateTicketLine(
+              label: l.label,
+              amount: l.amount,
+              prize: l.prize,
+              subGameId: l.subGameId,
+              subGameName: l.subGameName,
+            ))
+        .toList(),
+  );
+
+  final result = await getIt<CreateTicket>().call(request);
+  final receipt = result.fold<TicketReceipt?>(
+    (failure) {
+      messenger.showSnackBar(SnackBar(
+        content: Text('No se pudo registrar el ticket: ${failure.message}'),
+      ));
+      return null;
+    },
+    (r) => r,
+  );
+  if (receipt == null) return;
+
+  final payload = buildPayload(receipt);
+  await ref.read(printerControllerProvider.notifier).printTicket(payload);
   final after = ref.read(printerControllerProvider);
   if (after.errorMessage != null) {
     messenger.showSnackBar(SnackBar(
-      content: Text('Error al imprimir: ${after.errorMessage}'),
+      content: Text('Ticket #${receipt.folio} registrado, pero falló la '
+          'impresión: ${after.errorMessage}'),
     ));
     return;
   }
 
   onSuccess();
-  messenger.showSnackBar(const SnackBar(content: Text('Ticket impreso')));
-}
-
-String _generateFolio() {
-  return DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase();
+  final drawTime = DateFormat('HH:mm').format(receipt.drawAt.toLocal());
+  messenger.showSnackBar(SnackBar(
+    content: Text('Ticket #${receipt.folio} — Sorteo $drawTime'),
+  ));
 }
 
 class _GroupHeader extends StatelessWidget {

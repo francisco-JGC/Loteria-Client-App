@@ -29,6 +29,7 @@ class TicketPayload extends Equatable {
     required this.lines,
     required this.folio,
     required this.date,
+    this.drawAt,
     this.seller,
     this.client,
     this.footer,
@@ -40,6 +41,7 @@ class TicketPayload extends Equatable {
   final List<TicketLine> lines;
   final String folio;
   final DateTime date;
+  final DateTime? drawAt;
   final String? seller;
   final String? client;
   final String? footer;
@@ -78,6 +80,7 @@ class TicketPayload extends Equatable {
         lines,
         folio,
         date,
+        drawAt,
         seller,
         client,
         footer,

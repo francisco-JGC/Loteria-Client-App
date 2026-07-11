@@ -10,32 +10,54 @@ import '../../features/games/domain/entities/game.dart';
 import '../../features/games/presentation/screens/game_detail_page.dart';
 import '../../features/games/presentation/screens/games_page.dart';
 import '../../features/printer/presentation/screens/printer_setup_page.dart';
+import '../../features/sale_points/presentation/screens/select_sale_point_page.dart';
+import '../../features/sale_points/presentation/state/active_sale_point_controller.dart';
+import '../../features/sale_points/presentation/state/active_sale_point_state.dart';
 import '../../features/sales/presentation/screens/scan_ticket_page.dart';
 import '../../features/settings/presentation/screens/settings_page.dart';
 import '../widgets/placeholder_page.dart';
 import 'app_shell.dart';
 
-class _AuthRouterListenable extends ChangeNotifier {
-  _AuthRouterListenable(Ref ref) {
-    _sub = ref.listen<AuthState>(
+const _selectPointRoute = '/seleccionar-puesto';
+
+class _AppRouterListenable extends ChangeNotifier {
+  _AppRouterListenable(Ref ref) {
+    _authSub = ref.listen<AuthState>(
       authControllerProvider,
+      (previous, next) {
+        if (previous?.status != next.status) {
+          if (next.isAuthenticated) {
+            Future.microtask(() =>
+                ref.read(activeSalePointProvider.notifier).loadForCurrentUser());
+          } else if (next.isUnauthenticated) {
+            Future.microtask(
+                () => ref.read(activeSalePointProvider.notifier).clear());
+          }
+          notifyListeners();
+        }
+      },
+    );
+    _salePointSub = ref.listen<ActiveSalePointState>(
+      activeSalePointProvider,
       (previous, next) {
         if (previous?.status != next.status) notifyListeners();
       },
     );
   }
 
-  late final ProviderSubscription<AuthState> _sub;
+  late final ProviderSubscription<AuthState> _authSub;
+  late final ProviderSubscription<ActiveSalePointState> _salePointSub;
 
   @override
   void dispose() {
-    _sub.close();
+    _authSub.close();
+    _salePointSub.close();
     super.dispose();
   }
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final listenable = _AuthRouterListenable(ref);
+  final listenable = _AppRouterListenable(ref);
   ref.onDispose(listenable.dispose);
 
   return GoRouter(
@@ -43,6 +65,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: listenable,
     redirect: (context, state) {
       final auth = ref.read(authControllerProvider);
+      final salePoint = ref.read(activeSalePointProvider);
       final location = state.matchedLocation;
 
       if (auth.isLoading) {
@@ -51,7 +74,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (auth.isUnauthenticated) {
         return location == '/login' ? null : '/login';
       }
-      if (location == '/splash' || location == '/login') {
+
+      final needsSalePoint = salePoint.status == ActiveSalePointStatus.idle ||
+          salePoint.status == ActiveSalePointStatus.loading ||
+          salePoint.status == ActiveSalePointStatus.needsSelection ||
+          salePoint.status == ActiveSalePointStatus.empty ||
+          salePoint.status == ActiveSalePointStatus.error;
+
+      if (needsSalePoint) {
+        return location == _selectPointRoute ? null : _selectPointRoute;
+      }
+
+      if (location == '/splash' ||
+          location == '/login' ||
+          location == _selectPointRoute) {
         return '/juegos';
       }
       return null;
@@ -64,6 +100,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
+        path: _selectPointRoute,
+        builder: (context, state) => const SelectSalePointPage(),
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
