@@ -34,6 +34,8 @@ import '../../../sales/presentation/widgets/quick_combo_bet_form.dart';
 import '../../../sales/presentation/widgets/quick_date_bet_form.dart';
 import '../../../sales/presentation/widgets/quick_gana3_bet_form.dart';
 import '../../../sales/presentation/widgets/random_form.dart';
+import '../../../schedules/presentation/state/game_lock_controller.dart';
+import '../../../schedules/presentation/widgets/game_lock_gate.dart';
 import '../../../tickets/domain/entities/create_ticket_request.dart';
 import '../../../tickets/domain/entities/ticket_receipt.dart';
 import '../../../tickets/domain/usecases/create_ticket.dart';
@@ -56,18 +58,14 @@ class GameDetailPage extends ConsumerWidget {
         body: _NotFound(gameId: gameId),
       );
     }
-    switch (resolved.type) {
-      case GameType.date:
-        return _DateGameView(game: resolved);
-      case GameType.threeDigit:
-        return _Gana3GameView(game: resolved);
-      case GameType.fourDigit:
-        return _ComboGameView(game: resolved);
-      case GameType.multiSorteo:
-        return _MultiSorteoGameView(game: resolved);
-      case GameType.regular:
-        return _RegularGameView(game: resolved);
-    }
+    final child = switch (resolved.type) {
+      GameType.date => _DateGameView(game: resolved),
+      GameType.threeDigit => _Gana3GameView(game: resolved),
+      GameType.fourDigit => _ComboGameView(game: resolved),
+      GameType.multiSorteo => _MultiSorteoGameView(game: resolved),
+      GameType.regular => _RegularGameView(game: resolved),
+    };
+    return GameLockGate(gameId: resolved.id, child: child);
   }
 }
 
@@ -945,7 +943,14 @@ Future<void> _persistAndPrint(
   final messenger = ScaffoldMessenger.of(context);
   final printer = ref.read(printerControllerProvider);
   final salePoint = ref.read(activeSalePointProvider).selected;
+  final lock = ref.read(gameLockControllerProvider(game.id));
 
+  if (lock.isLocked) {
+    messenger.showSnackBar(const SnackBar(
+      content: Text('Sorteo en curso. No se pueden ingresar boletos ahora.'),
+    ));
+    return;
+  }
   if (salePoint == null) {
     messenger.showSnackBar(const SnackBar(
       content: Text('No hay puesto de venta activo.'),

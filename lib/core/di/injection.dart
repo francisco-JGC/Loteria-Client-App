@@ -31,6 +31,9 @@ import '../../features/sale_points/data/datasources/sale_points_local_datasource
 import '../../features/sale_points/data/datasources/sale_points_remote_datasource.dart';
 import '../../features/sale_points/data/repositories/sale_points_repository_impl.dart';
 import '../../features/sale_points/domain/repositories/sale_points_repository.dart';
+import '../../features/schedules/data/datasources/schedules_remote_datasource.dart';
+import '../../features/schedules/data/repositories/schedules_repository_impl.dart';
+import '../../features/schedules/domain/repositories/schedules_repository.dart';
 import '../../features/settings/data/datasources/settings_local_datasource.dart';
 import '../../features/settings/data/repositories/settings_repository_impl.dart';
 import '../../features/settings/domain/repositories/settings_repository.dart';
@@ -72,6 +75,7 @@ Future<void> configureDependencies() async {
   _registerAuthFeature();
   _registerGamesFeature();
   _registerSalePointsFeature();
+  _registerSchedulesFeature();
   _registerTicketsFeature();
   _registerResultsFeature();
   _registerSettingsFeature();
@@ -124,6 +128,16 @@ void _registerSalePointsFeature() {
     )
     ..registerLazySingleton<SalePointsRepository>(
       () => SalePointsRepositoryImpl(remote: getIt(), local: getIt()),
+    );
+}
+
+void _registerSchedulesFeature() {
+  getIt
+    ..registerLazySingleton<SchedulesRemoteDatasource>(
+      () => SchedulesRemoteDatasourceImpl(client: getIt()),
+    )
+    ..registerLazySingleton<SchedulesRepository>(
+      () => SchedulesRepositoryImpl(remote: getIt()),
     );
 }
 
