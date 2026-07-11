@@ -16,8 +16,6 @@ import '../../../sales/presentation/state/date_cart_controller.dart';
 import '../../../sales/presentation/state/date_cart_state.dart';
 import '../../../sales/presentation/state/gana3_cart_controller.dart';
 import '../../../sales/presentation/state/gana3_cart_state.dart';
-import '../../../sales/presentation/state/multi_sorteo_cart_controller.dart';
-import '../../../sales/presentation/state/multi_sorteo_cart_state.dart';
 import '../../../sales/presentation/widgets/bet_tile.dart';
 import '../../../sales/presentation/widgets/combo_bet_tile.dart';
 import '../../../sales/presentation/widgets/combo_line_form.dart';
@@ -28,12 +26,12 @@ import '../../../sales/presentation/widgets/gana3_bet_tile.dart';
 import '../../../sales/presentation/widgets/gana3_line_form.dart';
 import '../../../sales/presentation/widgets/gana3_random_form.dart';
 import '../../../sales/presentation/widgets/line_form.dart';
-import '../../../sales/presentation/widgets/multi_sorteo_bet_tile.dart';
 import '../../../sales/presentation/widgets/quick_bet_form.dart';
 import '../../../sales/presentation/widgets/quick_combo_bet_form.dart';
 import '../../../sales/presentation/widgets/quick_date_bet_form.dart';
 import '../../../sales/presentation/widgets/quick_gana3_bet_form.dart';
 import '../../../sales/presentation/widgets/random_form.dart';
+import '../../../schedules/presentation/state/available_draws_provider.dart';
 import '../../../schedules/presentation/state/game_lock_controller.dart';
 import '../../../schedules/presentation/widgets/game_lock_gate.dart';
 import '../../../tickets/domain/entities/create_ticket_request.dart';
@@ -266,33 +264,27 @@ class _MultiSorteoGameView extends ConsumerStatefulWidget {
 class _MultiSorteoGameViewState
     extends ConsumerState<_MultiSorteoGameView> {
   Game? _selectedSubGame;
-  final TextEditingController _sharedClientCtrl = TextEditingController();
-
-  @override
-  void dispose() {
-    _sharedClientCtrl.dispose();
-    super.dispose();
-  }
+  final Set<DateTime> _selectedDrawAts = <DateTime>{};
 
   @override
   Widget build(BuildContext context) {
     final gamesAsync = ref.watch(gamesControllerProvider);
-    final cart = ref.watch(multiSorteoCartControllerProvider(widget.game.id));
-    final controller =
-        ref.read(multiSorteoCartControllerProvider(widget.game.id).notifier);
     final printerState = ref.watch(printerControllerProvider);
 
-    final subGames = gamesAsync.value
-            ?.where((Game g) => g.id != widget.game.id)
-            .toList() ??
-        <Game>[];
+    final subGames = (gamesAsync.value ?? const <Game>[])
+        .where((g) => g.type != GameType.multiSorteo && g.id != widget.game.id)
+        .toList();
 
     if (_selectedSubGame == null && subGames.isNotEmpty) {
       _selectedSubGame = subGames.first;
     } else if (_selectedSubGame != null &&
         !subGames.any((g) => g.id == _selectedSubGame!.id)) {
       _selectedSubGame = subGames.isNotEmpty ? subGames.first : null;
+      _selectedDrawAts.clear();
     }
+
+    final sub = _selectedSubGame;
+    final cartSummary = sub == null ? null : _readCartSummary(sub);
 
     return Scaffold(
       appBar: AppBar(
@@ -301,182 +293,564 @@ class _MultiSorteoGameViewState
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(widget.game.name, style: const TextStyle(fontSize: 18)),
-            if (_selectedSubGame != null)
-              Text(
-                _selectedSubGame!.name,
-                style: const TextStyle(fontSize: 12),
-              ),
+            if (sub != null)
+              Text(sub.name, style: const TextStyle(fontSize: 12)),
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.qr_code_scanner),
-            tooltip: 'Escanear boleto',
-            onPressed: () =>
-                context.push('/juegos/${widget.game.id}/escanear', extra: widget.game),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_sweep_outlined),
-            tooltip: 'Limpiar carrito',
-            onPressed: cart.isEmpty
-                ? null
-                : () => _confirmClear(context, controller.clear),
-          ),
+          if (sub != null)
+            IconButton(
+              icon: const Icon(Icons.delete_sweep_outlined),
+              tooltip: 'Limpiar carrito',
+              onPressed: cartSummary != null && !cartSummary.isEmpty
+                  ? () => _confirmClear(context, () => _clearCart(sub))
+                  : null,
+            ),
         ],
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-            child: SizedBox(
-              height: 40,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: subGames.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (_, i) {
-                  final g = subGames[i];
-                  final isSelected = _selectedSubGame?.id == g.id;
-                  return ChoiceChip(
-                    label: Text(g.name),
-                    selected: isSelected,
-                    onSelected: (_) {
-                      setState(() => _selectedSubGame = g);
-                    },
-                  );
-                },
-              ),
-            ),
+          _SubGameChips(
+            subGames: subGames,
+            selectedId: sub?.id,
+            onSelected: (g) => setState(() {
+              _selectedSubGame = g;
+              _selectedDrawAts.clear();
+            }),
           ),
-          if (_selectedSubGame != null)
-            KeyedSubtree(
-              key: ValueKey('multi-body-${_selectedSubGame!.id}'),
-              child: _buildForm(controller, _selectedSubGame!),
+          if (sub != null) ...[
+            _cartBodyFor(sub),
+            _AvailableDrawsSelector(
+              gameId: sub.id,
+              selected: _selectedDrawAts,
+              onToggle: (d) => setState(() {
+                if (_selectedDrawAts.contains(d)) {
+                  _selectedDrawAts.remove(d);
+                } else {
+                  _selectedDrawAts.add(d);
+                }
+              }),
             ),
-          Expanded(
-            child: cart.isEmpty
-                ? const _EmptyView(
-                    icon: Icons.shuffle,
-                    label: 'Aún no hay números registrados',
-                  )
-                : _buildGroupedList(cart, controller),
+          ],
+        ],
+      ),
+      bottomNavigationBar: (sub == null ||
+              cartSummary == null ||
+              cartSummary.isEmpty ||
+              _selectedDrawAts.isEmpty)
+          ? null
+          : _MultiTotalBar(
+              total: cartSummary.total * _selectedDrawAts.length,
+              ticketCount: _selectedDrawAts.length,
+              isPrinting: printerState.isPrinting,
+              onPrint: () => _printMultiSorteoDraws(sub),
+            ),
+    );
+  }
+
+  Widget _cartBodyFor(Game sub) {
+    switch (sub.type) {
+      case GameType.regular:
+        final cart = ref.watch(cartControllerProvider(sub.id));
+        final controller = ref.read(cartControllerProvider(sub.id).notifier);
+        return Expanded(
+          child: Column(
+            children: [
+              QuickBetForm(onSubmit: controller.addSingle),
+              Expanded(
+                child: cart.isEmpty
+                    ? const _EmptyView()
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: cart.bets.length,
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemBuilder: (_, i) => BetTile(
+                          bet: cart.bets[i],
+                          onRemove: () => controller.removeAt(i),
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        );
+      case GameType.date:
+        final cart = ref.watch(dateCartControllerProvider(sub.id));
+        final controller =
+            ref.read(dateCartControllerProvider(sub.id).notifier);
+        return Expanded(
+          child: Column(
+            children: [
+              QuickDateBetForm(onSubmit: controller.addSingle),
+              Expanded(
+                child: cart.isEmpty
+                    ? const _EmptyView(
+                        icon: Icons.calendar_month_outlined,
+                        label: 'Aún no hay fechas registradas',
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: cart.bets.length,
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemBuilder: (_, i) => DateBetTile(
+                          bet: cart.bets[i],
+                          onRemove: () => controller.removeAt(i),
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        );
+      case GameType.threeDigit:
+        final cart = ref.watch(gana3CartControllerProvider(sub.id));
+        final controller =
+            ref.read(gana3CartControllerProvider(sub.id).notifier);
+        return Expanded(
+          child: Column(
+            children: [
+              QuickGana3BetForm(onSubmit: controller.addSingle),
+              Expanded(
+                child: cart.isEmpty
+                    ? const _EmptyView()
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: cart.bets.length,
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemBuilder: (_, i) => Gana3BetTile(
+                          bet: cart.bets[i],
+                          onRemove: () => controller.removeAt(i),
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        );
+      case GameType.fourDigit:
+        final cart = ref.watch(comboCartControllerProvider(sub.id));
+        final controller =
+            ref.read(comboCartControllerProvider(sub.id).notifier);
+        return Expanded(
+          child: Column(
+            children: [
+              QuickComboBetForm(onSubmit: controller.addSingle),
+              Expanded(
+                child: cart.isEmpty
+                    ? const _EmptyView()
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: cart.bets.length,
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemBuilder: (_, i) => ComboBetTile(
+                          bet: cart.bets[i],
+                          onRemove: () => controller.removeAt(i),
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        );
+      case GameType.multiSorteo:
+        return const SizedBox.shrink();
+    }
+  }
+
+  ({int total, int count, bool isEmpty}) _readCartSummary(Game sub) {
+    switch (sub.type) {
+      case GameType.regular:
+        final c = ref.watch(cartControllerProvider(sub.id));
+        return (total: c.total, count: c.count, isEmpty: c.isEmpty);
+      case GameType.date:
+        final c = ref.watch(dateCartControllerProvider(sub.id));
+        return (total: c.total, count: c.count, isEmpty: c.isEmpty);
+      case GameType.threeDigit:
+        final c = ref.watch(gana3CartControllerProvider(sub.id));
+        return (total: c.total, count: c.count, isEmpty: c.isEmpty);
+      case GameType.fourDigit:
+        final c = ref.watch(comboCartControllerProvider(sub.id));
+        return (total: c.total, count: c.count, isEmpty: c.isEmpty);
+      case GameType.multiSorteo:
+        return (total: 0, count: 0, isEmpty: true);
+    }
+  }
+
+  void _clearCart(Game sub) {
+    switch (sub.type) {
+      case GameType.regular:
+        ref.read(cartControllerProvider(sub.id).notifier).clear();
+      case GameType.date:
+        ref.read(dateCartControllerProvider(sub.id).notifier).clear();
+      case GameType.threeDigit:
+        ref.read(gana3CartControllerProvider(sub.id).notifier).clear();
+      case GameType.fourDigit:
+        ref.read(comboCartControllerProvider(sub.id).notifier).clear();
+      case GameType.multiSorteo:
+        return;
+    }
+  }
+
+  Future<void> _printMultiSorteoDraws(Game sub) async {
+    final draws = _selectedDrawAts.toList()..sort();
+    final messenger = ScaffoldMessenger.of(context);
+    var okCount = 0;
+    for (final drawAt in draws) {
+      final ok = await _printOneForDraw(sub, drawAt);
+      if (!ok) {
+        messenger.showSnackBar(SnackBar(
+          content: Text(
+            'Se generaron $okCount de ${draws.length} tickets. '
+            'Revisa el error del último intento.',
+          ),
+        ));
+        return;
+      }
+      okCount++;
+    }
+    if (!mounted) return;
+    _clearCart(sub);
+    setState(_selectedDrawAts.clear);
+    ref.invalidate(availableDrawsProvider(sub.id));
+    messenger.showSnackBar(SnackBar(
+      content: Text('$okCount ticket(s) impreso(s) correctamente'),
+    ));
+  }
+
+  Future<bool> _printOneForDraw(Game sub, DateTime drawAt) async {
+    switch (sub.type) {
+      case GameType.regular:
+        final cart = ref.read(cartControllerProvider(sub.id));
+        return _persistAndPrintForSub(
+          sub: sub,
+          client: cart.client,
+          drawAt: drawAt,
+          lines: cart.bets
+              .map((b) => (
+                    label: b.numberLabel,
+                    amount: b.amount,
+                    prize: b.prize,
+                    subGameId: null as String?,
+                    subGameName: null as String?,
+                  ))
+              .toList(),
+          buildPayload: (receipt) => TicketPayload(
+            id: receipt.id,
+            gameId: sub.id,
+            gameSlug: sub.slug,
+            gameName: sub.name,
+            lines: cart.bets
+                .map((b) => TicketLine(
+                      number: b.numberLabel,
+                      amount: b.amount,
+                      prize: b.prize,
+                    ))
+                .toList(),
+            folio: receipt.folio,
+            date: DateTime.now(),
+            drawAt: receipt.drawAt,
+            seller: ref.read(currentUserProvider)?.name,
+            client: cart.client,
+          ),
+        );
+      case GameType.date:
+        final cart = ref.read(dateCartControllerProvider(sub.id));
+        return _persistAndPrintForSub(
+          sub: sub,
+          client: cart.client,
+          drawAt: drawAt,
+          lines: cart.bets
+              .map((b) => (
+                    label: b.label,
+                    amount: b.amount,
+                    prize: b.prize,
+                    subGameId: null as String?,
+                    subGameName: null as String?,
+                  ))
+              .toList(),
+          buildPayload: (receipt) => TicketPayload(
+            id: receipt.id,
+            gameId: sub.id,
+            gameSlug: sub.slug,
+            gameName: sub.name,
+            lines: cart.bets
+                .map((b) => TicketLine(
+                      number: b.label,
+                      amount: b.amount,
+                      prize: b.prize,
+                    ))
+                .toList(),
+            folio: receipt.folio,
+            date: DateTime.now(),
+            drawAt: receipt.drawAt,
+            seller: ref.read(currentUserProvider)?.name,
+            client: cart.client,
+          ),
+        );
+      case GameType.threeDigit:
+        final cart = ref.read(gana3CartControllerProvider(sub.id));
+        return _persistAndPrintForSub(
+          sub: sub,
+          client: cart.client,
+          drawAt: drawAt,
+          lines: cart.bets
+              .map((b) => (
+                    label: b.isExact ? b.numberLabel : '${b.numberLabel} (F)',
+                    amount: b.amount,
+                    prize: b.prize,
+                    subGameId: null as String?,
+                    subGameName: null as String?,
+                  ))
+              .toList(),
+          buildPayload: (receipt) => TicketPayload(
+            id: receipt.id,
+            gameId: sub.id,
+            gameSlug: sub.slug,
+            gameName: sub.name,
+            lines: cart.bets
+                .map((b) => TicketLine(
+                      number: b.isExact
+                          ? b.numberLabel
+                          : '${b.numberLabel} (F)',
+                      amount: b.amount,
+                      prize: b.prize,
+                    ))
+                .toList(),
+            folio: receipt.folio,
+            date: DateTime.now(),
+            drawAt: receipt.drawAt,
+            seller: ref.read(currentUserProvider)?.name,
+            client: cart.client,
+          ),
+        );
+      case GameType.fourDigit:
+        final cart = ref.read(comboCartControllerProvider(sub.id));
+        return _persistAndPrintForSub(
+          sub: sub,
+          client: cart.client,
+          drawAt: drawAt,
+          lines: cart.bets
+              .map((b) => (
+                    label: b.numberLabel,
+                    amount: b.amount,
+                    prize: b.prize,
+                    subGameId: null as String?,
+                    subGameName: null as String?,
+                  ))
+              .toList(),
+          buildPayload: (receipt) => TicketPayload(
+            id: receipt.id,
+            gameId: sub.id,
+            gameSlug: sub.slug,
+            gameName: sub.name,
+            lines: cart.bets
+                .map((b) => TicketLine(
+                      number: b.numberLabel,
+                      amount: b.amount,
+                      prize: b.prize,
+                    ))
+                .toList(),
+            folio: receipt.folio,
+            date: DateTime.now(),
+            drawAt: receipt.drawAt,
+            seller: ref.read(currentUserProvider)?.name,
+            client: cart.client,
+          ),
+        );
+      case GameType.multiSorteo:
+        return false;
+    }
+  }
+
+  Future<bool> _persistAndPrintForSub({
+    required Game sub,
+    required String? client,
+    required DateTime drawAt,
+    required List<_RequestLine> lines,
+    required TicketPayload Function(TicketReceipt) buildPayload,
+  }) async {
+    var ok = false;
+    await _persistAndPrint(
+      context,
+      ref,
+      game: sub,
+      client: client,
+      lines: lines,
+      buildPayload: buildPayload,
+      drawAt: drawAt,
+      skipLockCheck: true,
+      onSuccess: () => ok = true,
+    );
+    return ok;
+  }
+}
+
+class _SubGameChips extends StatelessWidget {
+  const _SubGameChips({
+    required this.subGames,
+    required this.selectedId,
+    required this.onSelected,
+  });
+
+  final List<Game> subGames;
+  final String? selectedId;
+  final ValueChanged<Game> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      child: SizedBox(
+        height: 40,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: subGames.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 8),
+          itemBuilder: (_, i) {
+            final g = subGames[i];
+            return ChoiceChip(
+              label: Text(g.name),
+              selected: selectedId == g.id,
+              onSelected: (_) => onSelected(g),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _AvailableDrawsSelector extends ConsumerWidget {
+  const _AvailableDrawsSelector({
+    required this.gameId,
+    required this.selected,
+    required this.onToggle,
+  });
+
+  final String gameId;
+  final Set<DateTime> selected;
+  final ValueChanged<DateTime> onToggle;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final draws = ref.watch(availableDrawsProvider(gameId));
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Sorteos disponibles',
+            style: Theme.of(context)
+                .textTheme
+                .titleSmall
+                ?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          draws.when(
+            loading: () =>
+                const SizedBox(height: 32, child: LinearProgressIndicator()),
+            error: (e, _) => Text(
+              'No se pudieron cargar los sorteos.',
+              style: TextStyle(color: Colors.red.shade700),
+            ),
+            data: (items) {
+              if (items.isEmpty) {
+                return const Text(
+                  'No hay sorteos disponibles en las próximas horas.',
+                );
+              }
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: items.map((d) {
+                  final isToday = _isToday(d.drawAt);
+                  final label = isToday
+                      ? formatTime12h(d.drawAt)
+                      : '${d.drawAt.day}/${d.drawAt.month} · ${formatTime12h(d.drawAt)}';
+                  return FilterChip(
+                    label: Text(label),
+                    selected: selected.contains(d.drawAt),
+                    onSelected: (_) => onToggle(d.drawAt),
+                  );
+                }).toList(),
+              );
+            },
           ),
         ],
       ),
-      bottomNavigationBar: cart.isEmpty
-          ? null
-          : _TotalBar(
-              total: cart.total,
-              numberCount: cart.count,
-              isPrinting: printerState.isPrinting,
-              onPrint: () => _printMultiSorteo(context, ref, widget.game, cart),
+    );
+  }
+
+  bool _isToday(DateTime d) {
+    final now = DateTime.now();
+    return d.year == now.year && d.month == now.month && d.day == now.day;
+  }
+}
+
+class _MultiTotalBar extends StatelessWidget {
+  const _MultiTotalBar({
+    required this.total,
+    required this.ticketCount,
+    required this.isPrinting,
+    required this.onPrint,
+  });
+
+  final int total;
+  final int ticketCount;
+  final bool isPrinting;
+  final VoidCallback onPrint;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border(
+            top: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    kCurrencyFormat.format(total),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(
+                    '$ticketCount ticket${ticketCount == 1 ? '' : 's'}',
+                    style: const TextStyle(color: Colors.black54),
+                  ),
+                ],
+              ),
             ),
-    );
-  }
-
-  Widget _buildGroupedList(
-    MultiSorteoCartState cart,
-    MultiSorteoCartController controller,
-  ) {
-    final sorted = cart.bets.asMap().entries.toList()
-      ..sort((a, b) => a.value.subGameName.compareTo(b.value.subGameName));
-
-    final children = <Widget>[];
-    String? current;
-    for (final entry in sorted) {
-      final bet = entry.value;
-      if (bet.subGameName != current) {
-        current = bet.subGameName;
-        children.add(_GroupHeader(name: bet.subGameName));
-      } else {
-        children.add(const Divider(height: 1));
-      }
-      children.add(MultiSorteoBetTile(
-        bet: bet,
-        onRemove: () => controller.removeAt(entry.key),
-      ));
-    }
-    return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      children: children,
-    );
-  }
-
-  Widget _buildForm(MultiSorteoCartController controller, Game sub) {
-    final key = ValueKey('multi-form-${sub.id}');
-
-    if (sub.type == GameType.date) {
-      return QuickDateBetForm(
-        key: key,
-        clientController: _sharedClientCtrl,
-        onSubmit: ({
-          required int day,
-          required int month,
-          required int amount,
-          String? client,
-        }) =>
-            controller.addDate(
-          subGameId: sub.id,
-          subGameName: sub.name,
-          day: day,
-          month: month,
-          amount: amount,
-          client: client,
+            FilledButton.icon(
+              icon: isPrinting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.print),
+              label: Text('Imprimir $ticketCount'),
+              onPressed: isPrinting ? null : onPrint,
+            ),
+          ],
         ),
-      );
-    }
-    if (sub.type == GameType.threeDigit) {
-      return QuickGana3BetForm(
-        key: key,
-        clientController: _sharedClientCtrl,
-        onSubmit: ({
-          required int number,
-          required int amount,
-          required bool isExact,
-          String? client,
-        }) =>
-            controller.addGana3(
-          subGameId: sub.id,
-          subGameName: sub.name,
-          number: number,
-          amount: amount,
-          isExact: isExact,
-          client: client,
-        ),
-      );
-    }
-    if (sub.type == GameType.fourDigit) {
-      return QuickComboBetForm(
-        key: key,
-        clientController: _sharedClientCtrl,
-        onSubmit: ({
-          required int number,
-          required int amount,
-          String? client,
-        }) =>
-            controller.addCombo(
-          subGameId: sub.id,
-          subGameName: sub.name,
-          number: number,
-          amount: amount,
-          client: client,
-        ),
-      );
-    }
-    return QuickBetForm(
-      key: key,
-      clientController: _sharedClientCtrl,
-      onSubmit: ({
-        required int number,
-        required int amount,
-        String? client,
-      }) =>
-          controller.addRegular(
-        subGameId: sub.id,
-        subGameName: sub.name,
-        number: number,
-        amount: amount,
-        client: client,
       ),
     );
   }
@@ -740,54 +1114,6 @@ Future<void> _printRegular(
   );
 }
 
-Future<void> _printMultiSorteo(
-  BuildContext context,
-  WidgetRef ref,
-  Game game,
-  MultiSorteoCartState cart,
-) async {
-  final sorted = [...cart.bets]
-    ..sort((a, b) => a.subGameName.compareTo(b.subGameName));
-  final lines = sorted
-      .map((b) => (
-            label: b.label,
-            amount: b.amount,
-            prize: b.prize,
-            subGameId: null as String?,
-            subGameName: b.subGameName as String?,
-          ))
-      .toList();
-
-  await _persistAndPrint(
-    context,
-    ref,
-    game: game,
-    client: cart.client,
-    lines: lines,
-    buildPayload: (receipt) => TicketPayload(
-      id: receipt.id,
-      gameId: game.id,
-      gameSlug: game.slug,
-      gameName: game.name,
-      lines: sorted
-          .map((b) => TicketLine(
-                number: b.label,
-                amount: b.amount,
-                prize: b.prize,
-                subGameName: b.subGameName,
-              ))
-          .toList(),
-      folio: receipt.folio,
-      date: DateTime.now(),
-      drawAt: receipt.drawAt,
-      seller: ref.read(currentUserProvider)?.name,
-      client: cart.client,
-    ),
-    onSuccess: () =>
-        ref.read(multiSorteoCartControllerProvider(game.id).notifier).clear(),
-  );
-}
-
 Future<void> _printCombo(
   BuildContext context,
   WidgetRef ref,
@@ -939,13 +1265,15 @@ Future<void> _persistAndPrint(
   required List<_RequestLine> lines,
   required TicketPayload Function(TicketReceipt) buildPayload,
   required VoidCallback onSuccess,
+  DateTime? drawAt,
+  bool skipLockCheck = false,
 }) async {
   final messenger = ScaffoldMessenger.of(context);
   final printer = ref.read(printerControllerProvider);
   final salePoint = ref.read(activeSalePointProvider).selected;
   final lock = ref.read(gameLockControllerProvider(game.id));
 
-  if (lock.isLocked) {
+  if (!skipLockCheck && lock.isLocked) {
     messenger.showSnackBar(const SnackBar(
       content: Text('Sorteo en curso. No se pueden ingresar boletos ahora.'),
     ));
@@ -970,6 +1298,7 @@ Future<void> _persistAndPrint(
     gameId: game.id,
     salePointId: salePoint.id,
     client: client,
+    drawAt: drawAt,
     lines: lines
         .map((l) => CreateTicketLine(
               label: l.label,
@@ -1011,27 +1340,6 @@ Future<void> _persistAndPrint(
   ));
 }
 
-class _GroupHeader extends StatelessWidget {
-  const _GroupHeader({required this.name});
-
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Text(
-        name.toUpperCase(),
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: Colors.black54,
-          letterSpacing: 0.6,
-        ),
-      ),
-    );
-  }
-}
 
 class _EmptyView extends StatelessWidget {
   const _EmptyView({

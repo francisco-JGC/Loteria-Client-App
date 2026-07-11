@@ -33,20 +33,23 @@ class CreateTicketRequest extends Equatable {
     required this.salePointId,
     required this.lines,
     this.client,
+    this.drawAt,
   });
 
   final String gameId;
   final String salePointId;
   final List<CreateTicketLine> lines;
   final String? client;
+  final DateTime? drawAt;
 
   Map<String, dynamic> toJson() => {
         'gameId': gameId,
         'salePointId': salePointId,
         if (client != null) 'client': client,
         'lines': lines.map((l) => l.toJson()).toList(),
+        if (drawAt != null) 'drawAt': drawAt!.toUtc().toIso8601String(),
       };
 
   @override
-  List<Object?> get props => [gameId, salePointId, lines, client];
+  List<Object?> get props => [gameId, salePointId, lines, client, drawAt];
 }
