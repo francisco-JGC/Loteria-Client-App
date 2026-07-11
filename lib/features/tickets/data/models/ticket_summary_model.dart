@@ -15,6 +15,8 @@ class TicketSummaryModel extends TicketSummary {
     required super.createdAt,
     required super.voidedAt,
     required super.voidedReason,
+    required super.paidAt,
+    required super.paidPrize,
   });
 
   factory TicketSummaryModel.fromJson(Map<String, dynamic> json) {
@@ -34,6 +36,10 @@ class TicketSummaryModel extends TicketSummary {
           ? null
           : DateTime.parse(json['voidedAt'] as String),
       voidedReason: json['voidedReason'] as String?,
+      paidAt: json['paidAt'] == null
+          ? null
+          : DateTime.parse(json['paidAt'] as String),
+      paidPrize: (json['paidPrize'] as num?)?.toInt() ?? 0,
     );
   }
 }

@@ -17,6 +17,7 @@ abstract interface class TicketsRemoteDatasource {
     required String id,
     required String reason,
   });
+  Future<TicketSummaryModel> payTicket(String id);
 }
 
 class TicketsRemoteDatasourceImpl implements TicketsRemoteDatasource {
@@ -87,6 +88,20 @@ class TicketsRemoteDatasourceImpl implements TicketsRemoteDatasource {
       final response = await client.instance.post<Map<String, dynamic>>(
         '/tickets/$id/void',
         data: {'reason': reason},
+      );
+      final data = response.data;
+      if (data == null) throw ServerException('Empty response from server');
+      return TicketSummaryModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  @override
+  Future<TicketSummaryModel> payTicket(String id) async {
+    try {
+      final response = await client.instance.post<Map<String, dynamic>>(
+        '/tickets/$id/pay',
       );
       final data = response.data;
       if (data == null) throw ServerException('Empty response from server');

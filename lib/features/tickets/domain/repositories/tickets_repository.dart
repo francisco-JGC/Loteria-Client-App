@@ -15,4 +15,5 @@ abstract interface class TicketsRepository {
     required String id,
     required String reason,
   });
+  Future<Either<Failure, TicketSummary>> payTicket(String id);
 }

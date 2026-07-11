@@ -50,6 +50,11 @@ class TicketsRepositoryImpl implements TicketsRepository {
     return _guard(() => remote.voidTicket(id: id, reason: reason));
   }
 
+  @override
+  Future<Either<Failure, TicketSummary>> payTicket(String id) {
+    return _guard(() => remote.payTicket(id));
+  }
+
   Future<Either<Failure, T>> _guard<T>(Future<T> Function() run) async {
     try {
       return Right(await run());

@@ -27,6 +27,8 @@ class TicketSummary extends Equatable {
     required this.createdAt,
     required this.voidedAt,
     required this.voidedReason,
+    required this.paidAt,
+    required this.paidPrize,
   });
 
   final String id;
@@ -42,8 +44,11 @@ class TicketSummary extends Equatable {
   final DateTime createdAt;
   final DateTime? voidedAt;
   final String? voidedReason;
+  final DateTime? paidAt;
+  final int paidPrize;
 
   bool get isVoided => status == TicketStatus.voided;
+  bool get isPaid => paidAt != null;
 
   bool canBeVoidedAt(DateTime now) {
     if (isVoided) return false;
@@ -66,5 +71,7 @@ class TicketSummary extends Equatable {
         createdAt,
         voidedAt,
         voidedReason,
+        paidAt,
+        paidPrize,
       ];
 }

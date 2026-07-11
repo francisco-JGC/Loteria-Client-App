@@ -9,6 +9,8 @@ class WinningTicketModel extends WinningTicket {
     required super.drawAt,
     required super.totalPrize,
     required super.lines,
+    required super.paidAt,
+    required super.paidPrize,
   });
 
   factory WinningTicketModel.fromJson(Map<String, dynamic> json) {
@@ -25,6 +27,10 @@ class WinningTicketModel extends WinningTicket {
       drawAt: DateTime.parse(rawTicket['drawAt'] as String),
       totalPrize: (json['totalPrize'] as num).toInt(),
       lines: rawLines,
+      paidAt: rawTicket['paidAt'] == null
+          ? null
+          : DateTime.parse(rawTicket['paidAt'] as String),
+      paidPrize: (rawTicket['paidPrize'] as num?)?.toInt() ?? 0,
     );
   }
 }
