@@ -120,9 +120,17 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
     final profile = await CapabilityProfile.load();
     final g = Generator(PaperSize.mm58, profile);
     final dateOnly = DateFormat('dd/MM/yyyy');
+    final shortDate = DateFormat('dd/MM');
     String formatDateTime(DateTime d) {
       final t = DateFormat('h:mm a', 'en_US').format(d).toLowerCase();
       return '${dateOnly.format(d)} $t';
+    }
+    String formatDrawHint(DateTime d) {
+      final t = DateFormat('h:mm a', 'en_US').format(d).toLowerCase();
+      final now = DateTime.now();
+      final sameDay =
+          d.year == now.year && d.month == now.month && d.day == now.day;
+      return sameDay ? t : '${shortDate.format(d)} $t';
     }
     final money = kAmountFormat;
 
@@ -137,27 +145,13 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
     PosColumn gutter() => PosColumn(text: '', width: 1);
 
     return [
-      ...g.text(
-        '  LOTERIA  ',
-        styles: const PosStyles(
-          align: PosAlign.center,
-          height: PosTextSize.size2,
-          width: PosTextSize.size2,
-          bold: true,
-        ),
-      ),
-      ...g.text(
-        '  ${p.gameName}  ',
-        styles: const PosStyles(align: PosAlign.center, bold: true),
-      ),
-      ...g.hr(),
       ...g.text('  Folio: ${p.folio}', styles: infoStyle),
       ...g.text('  Fecha: ${formatDateTime(p.date)}', styles: infoStyle),
-      if (p.drawAt != null)
-        ...g.text(
-          '  Sorteo: ${formatDateTime(p.drawAt!.toLocal())}',
-          styles: infoStyle,
-        ),
+      ...g.text(
+        '  Sorteo: ${p.gameName}'
+        '${p.drawAt != null ? ' - ${formatDrawHint(p.drawAt!.toLocal())}' : ''}',
+        styles: infoStyle,
+      ),
       if (p.seller != null)
         ...g.text('  Vendedor: ${p.seller}', styles: infoStyle),
       if (p.client != null)
@@ -208,12 +202,10 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
         gutter(),
       ]),
       ...g.hr(),
-      ...g.feed(1),
       ...g.text(
         'Boleto valido para 1 sorteo',
         styles: const PosStyles(align: PosAlign.center, bold: true),
       ),
-      ...g.feed(1),
       ...g.text(
         'Por favor revisar su compra',
         styles: const PosStyles(align: PosAlign.center),
@@ -222,16 +214,13 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
         'No se aceptan devoluciones',
         styles: const PosStyles(align: PosAlign.center),
       ),
-      ...g.feed(1),
       ..._safeQrCode(g, p.toQrData(), moduleSize: 4),
-      if (p.footer != null) ...[
-        ...g.feed(1),
+      if (p.footer != null)
         ...g.text(
           '  ${p.footer}  ',
           styles: const PosStyles(align: PosAlign.center, bold: true),
         ),
-      ],
-      ...g.feed(2),
+      ...g.feed(1),
       ...g.cut(),
     ];
   }
