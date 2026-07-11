@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -9,11 +11,17 @@ import 'printer_state.dart';
 
 enum _PermissionOutcome { granted, denied, permanentlyDenied }
 
+const _healthCheckInterval = Duration(seconds: 3);
+
 class PrinterController extends Notifier<PrinterState> {
   late final _repository = getIt<PrinterRepository>();
+  Timer? _healthTimer;
 
   @override
-  PrinterState build() => const PrinterState.initial();
+  PrinterState build() {
+    ref.onDispose(_stopHealthCheck);
+    return const PrinterState.initial();
+  }
 
   Future<void> autoReconnect() async {
     try {
@@ -31,7 +39,10 @@ class PrinterController extends Notifier<PrinterState> {
       final connectResult = await _repository.connect(last.address);
       connectResult.match(
         (_) {},
-        (_) => state = state.copyWith(connectedDevice: last),
+        (_) {
+          state = state.copyWith(connectedDevice: last);
+          _startHealthCheck();
+        },
       );
     } catch (_) {
       // Silent: auto-reconnect never surfaces errors to the UI.
@@ -121,6 +132,7 @@ class PrinterController extends Notifier<PrinterState> {
           isConnecting: false,
           connectedDevice: device,
         );
+        _startHealthCheck();
       },
     );
   }
@@ -129,13 +141,17 @@ class PrinterController extends Notifier<PrinterState> {
     final result = await _repository.disconnect();
     result.match(
       (failure) => state = state.copyWith(errorMessage: failure.message),
-      (_) => state = state.copyWith(clearConnectedDevice: true),
+      (_) {
+        _stopHealthCheck();
+        state = state.copyWith(clearConnectedDevice: true);
+      },
     );
   }
 
   Future<void> forgetPrinter() async {
     await _repository.disconnect();
     await _repository.clearLastConnected();
+    _stopHealthCheck();
     state = state.copyWith(clearConnectedDevice: true);
   }
 
@@ -169,8 +185,32 @@ class PrinterController extends Notifier<PrinterState> {
     final result = await _repository.connect(device.address);
     result.match(
       (_) {},
-      (_) => state = state.copyWith(connectedDevice: device),
+      (_) {
+        state = state.copyWith(connectedDevice: device);
+        _startHealthCheck();
+      },
     );
+  }
+
+  void _startHealthCheck() {
+    _healthTimer?.cancel();
+    _healthTimer = Timer.periodic(_healthCheckInterval, (_) async {
+      if (!state.isConnected) {
+        _stopHealthCheck();
+        return;
+      }
+      final result = await _repository.isConnected();
+      final stillConnected = result.getOrElse((_) => true);
+      if (!stillConnected) {
+        _stopHealthCheck();
+        state = state.copyWith(clearConnectedDevice: true);
+      }
+    });
+  }
+
+  void _stopHealthCheck() {
+    _healthTimer?.cancel();
+    _healthTimer = null;
   }
 
   Future<_PermissionOutcome> _ensurePermissions() async {
