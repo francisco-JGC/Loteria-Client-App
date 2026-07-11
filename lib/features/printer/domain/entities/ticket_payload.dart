@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:equatable/equatable.dart';
 
 class TicketLine extends Equatable {
@@ -23,6 +21,7 @@ class TicketLine extends Equatable {
 
 class TicketPayload extends Equatable {
   const TicketPayload({
+    required this.id,
     required this.gameId,
     required this.gameSlug,
     required this.gameName,
@@ -35,6 +34,7 @@ class TicketPayload extends Equatable {
     this.footer,
   });
 
+  final String id;
   final String gameId;
   final String gameSlug;
   final String gameName;
@@ -50,30 +50,11 @@ class TicketPayload extends Equatable {
   int get totalPrize => lines.fold(0, (sum, l) => sum + l.prize);
   int get count => lines.length;
 
-  String toQrData() {
-    return jsonEncode({
-      'g': gameSlug,
-      'f': folio,
-      if (client != null) 'c': _ascii(client!),
-      'b': lines.map((l) => l.toQrEntry()).toList(),
-    });
-  }
-
-  static String _ascii(String value) {
-    const map = {
-      'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
-      'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U',
-      'ñ': 'n', 'Ñ': 'N', 'ü': 'u', 'Ü': 'U',
-    };
-    final buf = StringBuffer();
-    for (final ch in value.split('')) {
-      buf.write(map[ch] ?? ch);
-    }
-    return buf.toString();
-  }
+  String toQrData() => id;
 
   @override
   List<Object?> get props => [
+        id,
         gameId,
         gameSlug,
         gameName,

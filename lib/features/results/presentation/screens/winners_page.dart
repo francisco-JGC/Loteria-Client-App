@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/utils/currency.dart';
+import '../../../../core/utils/time_format.dart';
 import '../../../games/domain/entities/game.dart';
 import '../../../games/presentation/state/games_controller.dart';
 import '../../domain/entities/winning_ticket.dart';
@@ -65,7 +66,7 @@ class _WinnerTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateFmt = DateFormat('dd/MM HH:mm');
+    final dateFmt = DateFormat('dd/MM');
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -102,7 +103,8 @@ class _WinnerTile extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '#${ticket.folio} — Sorteo ${dateFmt.format(ticket.drawAt.toLocal())}',
+              '#${ticket.folio} — Sorteo ${dateFmt.format(ticket.drawAt.toLocal())} '
+              '${formatTime12h(ticket.drawAt)}',
               style:
                   theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
             ),

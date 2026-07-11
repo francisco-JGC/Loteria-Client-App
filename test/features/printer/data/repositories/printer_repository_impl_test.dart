@@ -89,6 +89,7 @@ void main() {
       () async {
     when(() => bluetooth.printTicket(any())).thenAnswer((_) async {});
     final payload = TicketPayload(
+      id: 'test-id',
       gameId: 'diaria',
       gameSlug: 'diaria',
       gameName: 'Diaria',

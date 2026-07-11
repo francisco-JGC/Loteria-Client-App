@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/time_format.dart';
 import '../../../games/domain/entities/game.dart';
 import '../../../games/presentation/state/games_controller.dart';
 import '../../domain/entities/draw_result.dart';
@@ -97,7 +98,6 @@ class _DayGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final timeFmt = DateFormat('HH:mm');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -114,9 +114,7 @@ class _DayGroup extends StatelessWidget {
           Card(
             child: ListTile(
               title: Text(gamesById[r.gameId]?.name ?? '—'),
-              subtitle: Text(
-                'Sorteo ${timeFmt.format(r.drawAt.toLocal())}',
-              ),
+              subtitle: Text('Sorteo ${formatTime12h(r.drawAt)}'),
               trailing: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 6),

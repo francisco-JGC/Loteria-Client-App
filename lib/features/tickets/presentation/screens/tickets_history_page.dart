@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/utils/currency.dart';
+import '../../../../core/utils/time_format.dart';
 import '../../../games/domain/entities/game.dart';
 import '../../../games/presentation/state/games_controller.dart';
 import '../../domain/entities/ticket_summary.dart';
@@ -66,12 +68,14 @@ class _TicketTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final timeFmt = DateFormat('HH:mm');
-    final dateFmt = DateFormat('dd/MM HH:mm');
+    final saleDateFmt = DateFormat('dd/MM');
     final gameName = game?.name ?? '—';
 
     return Card(
-      child: Padding(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push('/reportes/facturas/${ticket.id}'),
+        child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,12 +105,14 @@ class _TicketTile extends ConsumerWidget {
               children: [
                 _MetaLine(
                   icon: Icons.shopping_cart_outlined,
-                  label: dateFmt.format(ticket.createdAt.toLocal()),
+                  label:
+                      '${saleDateFmt.format(ticket.createdAt.toLocal())} · '
+                      '${formatTime12h(ticket.createdAt)}',
                 ),
                 const SizedBox(width: 16),
                 _MetaLine(
                   icon: Icons.event_outlined,
-                  label: 'Sorteo ${timeFmt.format(ticket.drawAt.toLocal())}',
+                  label: 'Sorteo ${formatTime12h(ticket.drawAt)}',
                 ),
               ],
             ),
@@ -154,6 +160,7 @@ class _TicketTile extends ConsumerWidget {
               ),
             ],
           ],
+        ),
         ),
       ),
     );

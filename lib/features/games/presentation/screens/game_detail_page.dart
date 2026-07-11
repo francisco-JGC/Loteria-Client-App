@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-
 import '../../../../core/di/injection.dart';
 import '../../../../core/session/current_user.dart';
 import '../../../../core/utils/currency.dart';
+import '../../../../core/utils/time_format.dart';
 import '../../../printer/domain/entities/ticket_payload.dart';
 import '../../../printer/presentation/state/printer_controller.dart';
 import '../../../sale_points/presentation/state/active_sale_point_controller.dart';
@@ -721,6 +720,7 @@ Future<void> _printRegular(
     client: cart.client,
     lines: lines,
     buildPayload: (receipt) => TicketPayload(
+      id: receipt.id,
       gameId: game.id,
       gameSlug: game.slug,
       gameName: game.name,
@@ -767,6 +767,7 @@ Future<void> _printMultiSorteo(
     client: cart.client,
     lines: lines,
     buildPayload: (receipt) => TicketPayload(
+      id: receipt.id,
       gameId: game.id,
       gameSlug: game.slug,
       gameName: game.name,
@@ -812,6 +813,7 @@ Future<void> _printCombo(
     client: cart.client,
     lines: lines,
     buildPayload: (receipt) => TicketPayload(
+      id: receipt.id,
       gameId: game.id,
       gameSlug: game.slug,
       gameName: game.name,
@@ -856,6 +858,7 @@ Future<void> _printGana3(
     client: cart.client,
     lines: lines,
     buildPayload: (receipt) => TicketPayload(
+      id: receipt.id,
       gameId: game.id,
       gameSlug: game.slug,
       gameName: game.name,
@@ -900,6 +903,7 @@ Future<void> _printDates(
     client: cart.client,
     lines: lines,
     buildPayload: (receipt) => TicketPayload(
+      id: receipt.id,
       gameId: game.id,
       gameSlug: game.slug,
       gameName: game.name,
@@ -996,7 +1000,7 @@ Future<void> _persistAndPrint(
   }
 
   onSuccess();
-  final drawTime = DateFormat('HH:mm').format(receipt.drawAt.toLocal());
+  final drawTime = formatTime12h(receipt.drawAt);
   messenger.showSnackBar(SnackBar(
     content: Text('Ticket #${receipt.folio} — Sorteo $drawTime'),
   ));

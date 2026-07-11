@@ -4,6 +4,7 @@ import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/create_ticket_request.dart';
 import '../../domain/entities/list_tickets_query.dart';
+import '../../domain/entities/ticket_detail.dart';
 import '../../domain/entities/ticket_receipt.dart';
 import '../../domain/entities/ticket_summary.dart';
 import '../../domain/repositories/tickets_repository.dart';
@@ -34,6 +35,11 @@ class TicketsRepositoryImpl implements TicketsRepository {
         total: raw.total,
       );
     });
+  }
+
+  @override
+  Future<Either<Failure, TicketDetail>> findById(String id) {
+    return _guard(() => remote.findById(id));
   }
 
   @override

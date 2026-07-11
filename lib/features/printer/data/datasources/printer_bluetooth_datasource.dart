@@ -119,7 +119,11 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
   Future<List<int>> _buildTicketBytes(TicketPayload p) async {
     final profile = await CapabilityProfile.load();
     final g = Generator(PaperSize.mm58, profile);
-    final dateFmt = DateFormat('yyyy-MM-dd HH:mm');
+    final dateOnly = DateFormat('dd/MM/yyyy');
+    String formatDateTime(DateTime d) {
+      final t = DateFormat('h:mm a', 'en_US').format(d).toLowerCase();
+      return '${dateOnly.format(d)} $t';
+    }
     final money = kAmountFormat;
 
     const infoStyle = PosStyles(bold: true);
@@ -147,10 +151,11 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
         styles: const PosStyles(align: PosAlign.center, bold: true),
       ),
       ...g.hr(),
-      ...g.text('  Fecha: ${dateFmt.format(p.date)}', styles: infoStyle),
+      ...g.text('  Folio: ${p.folio}', styles: infoStyle),
+      ...g.text('  Fecha: ${formatDateTime(p.date)}', styles: infoStyle),
       if (p.drawAt != null)
         ...g.text(
-          '  Sorteo: ${dateFmt.format(p.drawAt!.toLocal())}',
+          '  Sorteo: ${formatDateTime(p.drawAt!.toLocal())}',
           styles: infoStyle,
         ),
       if (p.seller != null)
@@ -218,12 +223,7 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
         styles: const PosStyles(align: PosAlign.center),
       ),
       ...g.feed(1),
-      ..._safeQrCode(g, p.toQrData()),
-      ...g.feed(1),
-      ...g.text(
-        'Folio: ${p.folio}',
-        styles: const PosStyles(align: PosAlign.center, bold: true),
-      ),
+      ..._safeQrCode(g, p.toQrData(), moduleSize: 4),
       if (p.footer != null) ...[
         ...g.feed(1),
         ...g.text(

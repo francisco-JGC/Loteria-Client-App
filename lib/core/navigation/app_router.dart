@@ -17,6 +17,7 @@ import '../../features/sale_points/presentation/state/active_sale_point_controll
 import '../../features/sale_points/presentation/state/active_sale_point_state.dart';
 import '../../features/sales/presentation/screens/scan_ticket_page.dart';
 import '../../features/settings/presentation/screens/settings_page.dart';
+import '../../features/tickets/presentation/screens/ticket_detail_page.dart';
 import '../../features/tickets/presentation/screens/tickets_history_page.dart';
 import '../widgets/placeholder_page.dart';
 import 'app_shell.dart';
@@ -166,6 +167,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
         ],
+      ),
+      GoRoute(
+        path: '/reportes/facturas/:id',
+        builder: (context, state) =>
+            TicketDetailPage(ticketId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/juegos/:gameId',

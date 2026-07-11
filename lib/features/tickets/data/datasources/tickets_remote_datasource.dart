@@ -4,6 +4,7 @@ import '../../../../core/errors/exceptions.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../domain/entities/create_ticket_request.dart';
 import '../../domain/entities/list_tickets_query.dart';
+import '../models/ticket_detail_model.dart';
 import '../models/ticket_receipt_model.dart';
 import '../models/ticket_summary_model.dart';
 
@@ -11,6 +12,7 @@ abstract interface class TicketsRemoteDatasource {
   Future<TicketReceiptModel> create(CreateTicketRequest request);
   Future<({List<TicketSummaryModel> items, int page, int limit, int total})>
       list(ListTicketsQuery query);
+  Future<TicketDetailModel> findById(String id);
   Future<TicketSummaryModel> voidTicket({
     required String id,
     required String reason,
@@ -58,6 +60,19 @@ class TicketsRemoteDatasourceImpl implements TicketsRemoteDatasource {
         limit: (data['limit'] as num).toInt(),
         total: (data['total'] as num).toInt(),
       );
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  @override
+  Future<TicketDetailModel> findById(String id) async {
+    try {
+      final response =
+          await client.instance.get<Map<String, dynamic>>('/tickets/$id');
+      final data = response.data;
+      if (data == null) throw ServerException('Empty response from server');
+      return TicketDetailModel.fromJson(data);
     } on DioException catch (e) {
       throw _mapError(e);
     }
