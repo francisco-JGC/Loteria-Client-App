@@ -3,10 +3,18 @@ import 'package:dio/dio.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../domain/entities/create_ticket_request.dart';
+import '../../domain/entities/list_tickets_query.dart';
 import '../models/ticket_receipt_model.dart';
+import '../models/ticket_summary_model.dart';
 
 abstract interface class TicketsRemoteDatasource {
   Future<TicketReceiptModel> create(CreateTicketRequest request);
+  Future<({List<TicketSummaryModel> items, int page, int limit, int total})>
+      list(ListTicketsQuery query);
+  Future<TicketSummaryModel> voidTicket({
+    required String id,
+    required String reason,
+  });
 }
 
 class TicketsRemoteDatasourceImpl implements TicketsRemoteDatasource {
@@ -22,22 +30,68 @@ class TicketsRemoteDatasourceImpl implements TicketsRemoteDatasource {
         data: request.toJson(),
       );
       final data = response.data;
-      if (data == null) {
-        throw ServerException('Empty response from server');
-      }
+      if (data == null) throw ServerException('Empty response from server');
       return TicketReceiptModel.fromJson(data);
     } on DioException catch (e) {
-      final type = e.type;
-      if (type == DioExceptionType.connectionTimeout ||
-          type == DioExceptionType.connectionError ||
-          type == DioExceptionType.receiveTimeout) {
-        throw NetworkException(e.message ?? 'Network error');
-      }
-      final body = e.response?.data;
-      final message = body is Map<String, dynamic>
-          ? (body['message']?.toString() ?? e.message ?? 'Server error')
-          : (e.message ?? 'Server error');
-      throw ServerException(message, statusCode: e.response?.statusCode);
+      throw _mapError(e);
     }
+  }
+
+  @override
+  Future<({List<TicketSummaryModel> items, int page, int limit, int total})>
+      list(ListTicketsQuery query) async {
+    try {
+      final response = await client.instance.get<Map<String, dynamic>>(
+        '/tickets',
+        queryParameters: query.toQueryParameters(),
+      );
+      final data = response.data;
+      if (data == null) throw ServerException('Empty response from server');
+      final rawItems = (data['items'] as List<dynamic>? ?? const []);
+      final items = rawItems
+          .map((raw) =>
+              TicketSummaryModel.fromJson(raw as Map<String, dynamic>))
+          .toList();
+      return (
+        items: items,
+        page: (data['page'] as num).toInt(),
+        limit: (data['limit'] as num).toInt(),
+        total: (data['total'] as num).toInt(),
+      );
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  @override
+  Future<TicketSummaryModel> voidTicket({
+    required String id,
+    required String reason,
+  }) async {
+    try {
+      final response = await client.instance.post<Map<String, dynamic>>(
+        '/tickets/$id/void',
+        data: {'reason': reason},
+      );
+      final data = response.data;
+      if (data == null) throw ServerException('Empty response from server');
+      return TicketSummaryModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  Exception _mapError(DioException e) {
+    final type = e.type;
+    if (type == DioExceptionType.connectionTimeout ||
+        type == DioExceptionType.connectionError ||
+        type == DioExceptionType.receiveTimeout) {
+      return NetworkException(e.message ?? 'Network error');
+    }
+    final body = e.response?.data;
+    final message = body is Map<String, dynamic>
+        ? (body['message']?.toString() ?? e.message ?? 'Server error')
+        : (e.message ?? 'Server error');
+    return ServerException(message, statusCode: e.response?.statusCode);
   }
 }

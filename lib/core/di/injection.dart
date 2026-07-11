@@ -37,6 +37,8 @@ import '../../features/tickets/data/datasources/tickets_remote_datasource.dart';
 import '../../features/tickets/data/repositories/tickets_repository_impl.dart';
 import '../../features/tickets/domain/repositories/tickets_repository.dart';
 import '../../features/tickets/domain/usecases/create_ticket.dart';
+import '../../features/tickets/domain/usecases/list_my_tickets.dart';
+import '../../features/tickets/domain/usecases/void_my_ticket.dart';
 import '../network/dio_client.dart';
 import '../network/session_events.dart';
 import '../network/token_store.dart';
@@ -131,6 +133,12 @@ void _registerTicketsFeature() {
     )
     ..registerFactory<CreateTicket>(
       () => CreateTicket(repository: getIt()),
+    )
+    ..registerFactory<ListMyTickets>(
+      () => ListMyTickets(repository: getIt()),
+    )
+    ..registerFactory<VoidMyTicket>(
+      () => VoidMyTicket(repository: getIt()),
     );
 }
 
