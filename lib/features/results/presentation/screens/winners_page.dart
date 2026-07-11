@@ -38,6 +38,7 @@ class WinnersPage extends ConsumerWidget {
         onPressed: () =>
             context.push('/reportes/boletos-ganadores/verificar'),
       ),
+      bottomNavigationBar: _TotalsBar(tickets: state.value ?? const []),
       body: Column(
         children: [
           _DateRangeBar(filters: filters),
@@ -57,7 +58,7 @@ class WinnersPage extends ConsumerWidget {
                           .read(winnersControllerProvider.notifier)
                           .refresh(),
                       child: ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 80),
+                        padding: const EdgeInsets.all(12),
                         itemCount: items.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, i) => _WinnerTile(
@@ -68,7 +69,6 @@ class WinnersPage extends ConsumerWidget {
                     ),
             ),
           ),
-          _TotalsBar(tickets: state.value ?? const []),
         ],
       ),
     );
@@ -200,6 +200,7 @@ class _TotalCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
