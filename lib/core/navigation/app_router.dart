@@ -134,7 +134,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'escanear',
             builder: (context, state) => ScanTicketPage(
-              gameId: state.pathParameters['gameId']!,
+              game: state.extra as Game,
             ),
           ),
         ],

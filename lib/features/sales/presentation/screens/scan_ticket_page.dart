@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../../../games/domain/entities/game.dart';
+import '../../../games/domain/entities/game_type.dart';
 import '../../domain/entities/bet.dart';
 import '../../domain/entities/date_bet.dart';
 import '../../domain/entities/gana3_bet.dart';
@@ -12,15 +14,10 @@ import '../state/combo_cart_controller.dart';
 import '../state/date_cart_controller.dart';
 import '../state/gana3_cart_controller.dart';
 
-const String _kDateGameId = 'fechas';
-const String _kComboGameId = 'combo';
-const String _kMultiSorteoId = 'multisorteo';
-const Set<String> _kGana3LikeGameIds = {'gana3', 'juega3', 'tresmonazo'};
-
 class ScanTicketPage extends ConsumerStatefulWidget {
-  const ScanTicketPage({required this.gameId, super.key});
+  const ScanTicketPage({required this.game, super.key});
 
-  final String gameId;
+  final Game game;
 
   @override
   ConsumerState<ScanTicketPage> createState() => _ScanTicketPageState();
@@ -64,16 +61,16 @@ class _ScanTicketPageState extends ConsumerState<ScanTicketPage> {
       if (data is! Map<String, dynamic>) {
         return const _ParseResult.err('QR no reconocido');
       }
-      final scannedGameId = data['g'] as String?;
-      if (scannedGameId == null) {
+      final scannedSlug = data['g'] as String?;
+      if (scannedSlug == null) {
         return const _ParseResult.err('QR no reconocido');
       }
-      if (scannedGameId != widget.gameId) {
+      if (scannedSlug != widget.game.slug) {
         return _ParseResult.err(
-          'Este boleto es de otro juego ($scannedGameId)',
+          'Este boleto es de otro juego ($scannedSlug)',
         );
       }
-      if (scannedGameId == _kMultiSorteoId) {
+      if (widget.game.type == GameType.multiSorteo) {
         return const _ParseResult.err(
           'Los boletos de Multi Sorteo no se pueden re-escanear',
         );
@@ -84,26 +81,26 @@ class _ScanTicketPageState extends ConsumerState<ScanTicketPage> {
       }
       final client = data['c'] as String?;
 
-      if (scannedGameId == _kDateGameId) {
-        return _parseDates(rawBets, client);
+      switch (widget.game.type) {
+        case GameType.date:
+          return _parseDates(rawBets, client);
+        case GameType.threeDigit:
+          return _parseGana3(rawBets, client);
+        case GameType.fourDigit:
+          return _parseCombo(rawBets, client);
+        case GameType.regular:
+          return _parseRegular(rawBets, client);
+        case GameType.multiSorteo:
+          return const _ParseResult.err(
+            'Los boletos de Multi Sorteo no se pueden re-escanear',
+          );
       }
-      if (_kGana3LikeGameIds.contains(scannedGameId)) {
-        return _parseGana3(rawBets, client, scannedGameId);
-      }
-      if (scannedGameId == _kComboGameId) {
-        return _parseCombo(rawBets, client);
-      }
-      return _parseRegular(rawBets, client, scannedGameId);
     } catch (_) {
       return const _ParseResult.err('QR ilegible');
     }
   }
 
-  _ParseResult _parseRegular(
-    List<dynamic> raw,
-    String? client,
-    String gameId,
-  ) {
+  _ParseResult _parseRegular(List<dynamic> raw, String? client) {
     final bets = <Bet>[];
     for (final item in raw) {
       final entry = _entry(item);
@@ -115,7 +112,9 @@ class _ScanTicketPageState extends ConsumerState<ScanTicketPage> {
       bets.add(Bet(number: n, amount: entry.$2));
     }
     return _ParseResult.ok((ref) {
-      ref.read(cartControllerProvider(gameId).notifier).addBets(bets, client: client);
+      ref
+          .read(cartControllerProvider(widget.game.id).notifier)
+          .addBets(bets, client: client);
       return bets.length;
     });
   }
@@ -136,7 +135,7 @@ class _ScanTicketPageState extends ConsumerState<ScanTicketPage> {
     }
     return _ParseResult.ok((ref) {
       final notifier =
-          ref.read(dateCartControllerProvider(_kDateGameId).notifier);
+          ref.read(dateCartControllerProvider(widget.game.id).notifier);
       for (final b in bets) {
         notifier.addSingle(
           day: b.day,
@@ -149,11 +148,7 @@ class _ScanTicketPageState extends ConsumerState<ScanTicketPage> {
     });
   }
 
-  _ParseResult _parseGana3(
-    List<dynamic> raw,
-    String? client,
-    String gameId,
-  ) {
+  _ParseResult _parseGana3(List<dynamic> raw, String? client) {
     final bets = <Gana3Bet>[];
     for (final item in raw) {
       final entry = _entry(item);
@@ -169,7 +164,7 @@ class _ScanTicketPageState extends ConsumerState<ScanTicketPage> {
     }
     return _ParseResult.ok((ref) {
       final notifier =
-          ref.read(gana3CartControllerProvider(gameId).notifier);
+          ref.read(gana3CartControllerProvider(widget.game.id).notifier);
       for (final b in bets) {
         notifier.addSingle(
           number: b.number,
@@ -195,7 +190,7 @@ class _ScanTicketPageState extends ConsumerState<ScanTicketPage> {
     }
     return _ParseResult.ok((ref) {
       final notifier =
-          ref.read(comboCartControllerProvider(_kComboGameId).notifier);
+          ref.read(comboCartControllerProvider(widget.game.id).notifier);
       for (final b in bets) {
         notifier.addSingle(number: b.$1, amount: b.$2, client: client);
       }

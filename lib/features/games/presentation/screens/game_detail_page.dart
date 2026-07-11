@@ -33,12 +33,8 @@ import '../../../sales/presentation/widgets/quick_date_bet_form.dart';
 import '../../../sales/presentation/widgets/quick_gana3_bet_form.dart';
 import '../../../sales/presentation/widgets/random_form.dart';
 import '../../domain/entities/game.dart';
+import '../../domain/entities/game_type.dart';
 import '../state/games_controller.dart';
-
-const String _kDateGameId = 'fechas';
-const String _kComboGameId = 'combo';
-const String _kMultiSorteoId = 'multisorteo';
-const Set<String> _kGana3LikeGameIds = {'gana3', 'juega3', 'tresmonazo'};
 
 class GameDetailPage extends ConsumerWidget {
   const GameDetailPage({required this.gameId, this.game, super.key});
@@ -55,19 +51,18 @@ class GameDetailPage extends ConsumerWidget {
         body: _NotFound(gameId: gameId),
       );
     }
-    if (resolved.id == _kDateGameId) {
-      return _DateGameView(game: resolved);
+    switch (resolved.type) {
+      case GameType.date:
+        return _DateGameView(game: resolved);
+      case GameType.threeDigit:
+        return _Gana3GameView(game: resolved);
+      case GameType.fourDigit:
+        return _ComboGameView(game: resolved);
+      case GameType.multiSorteo:
+        return _MultiSorteoGameView(game: resolved);
+      case GameType.regular:
+        return _RegularGameView(game: resolved);
     }
-    if (_kGana3LikeGameIds.contains(resolved.id)) {
-      return _Gana3GameView(game: resolved);
-    }
-    if (resolved.id == _kComboGameId) {
-      return _ComboGameView(game: resolved);
-    }
-    if (resolved.id == _kMultiSorteoId) {
-      return _MultiSorteoGameView(game: resolved);
-    }
-    return _RegularGameView(game: resolved);
   }
 }
 
@@ -99,7 +94,7 @@ class _RegularGameView extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
             tooltip: 'Escanear boleto',
-            onPressed: () => context.push('/juegos/${game.id}/escanear'),
+            onPressed: () => context.push('/juegos/${game.id}/escanear', extra: game),
           ),
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
@@ -211,7 +206,7 @@ class _DateGameView extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
             tooltip: 'Escanear boleto',
-            onPressed: () => context.push('/juegos/${game.id}/escanear'),
+            onPressed: () => context.push('/juegos/${game.id}/escanear', extra: game),
           ),
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
@@ -315,7 +310,7 @@ class _MultiSorteoGameViewState
             icon: const Icon(Icons.qr_code_scanner),
             tooltip: 'Escanear boleto',
             onPressed: () =>
-                context.push('/juegos/${widget.game.id}/escanear'),
+                context.push('/juegos/${widget.game.id}/escanear', extra: widget.game),
           ),
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
@@ -407,7 +402,7 @@ class _MultiSorteoGameViewState
   Widget _buildForm(MultiSorteoCartController controller, Game sub) {
     final key = ValueKey('multi-form-${sub.id}');
 
-    if (sub.id == _kDateGameId) {
+    if (sub.type == GameType.date) {
       return QuickDateBetForm(
         key: key,
         clientController: _sharedClientCtrl,
@@ -427,7 +422,7 @@ class _MultiSorteoGameViewState
         ),
       );
     }
-    if (_kGana3LikeGameIds.contains(sub.id)) {
+    if (sub.type == GameType.threeDigit) {
       return QuickGana3BetForm(
         key: key,
         clientController: _sharedClientCtrl,
@@ -447,7 +442,7 @@ class _MultiSorteoGameViewState
         ),
       );
     }
-    if (sub.id == _kComboGameId) {
+    if (sub.type == GameType.fourDigit) {
       return QuickComboBetForm(
         key: key,
         clientController: _sharedClientCtrl,
@@ -533,7 +528,7 @@ class _ComboGameView extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
             tooltip: 'Escanear boleto',
-            onPressed: () => context.push('/juegos/${game.id}/escanear'),
+            onPressed: () => context.push('/juegos/${game.id}/escanear', extra: game),
           ),
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
@@ -629,7 +624,7 @@ class _Gana3GameView extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
             tooltip: 'Escanear boleto',
-            onPressed: () => context.push('/juegos/${game.id}/escanear'),
+            onPressed: () => context.push('/juegos/${game.id}/escanear', extra: game),
           ),
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
@@ -705,6 +700,7 @@ Future<void> _printRegular(
 ) async {
   final payload = TicketPayload(
     gameId: game.id,
+    gameSlug: game.slug,
     gameName: game.name,
     lines: cart.bets
         .map((b) => TicketLine(
@@ -737,6 +733,7 @@ Future<void> _printMultiSorteo(
     ..sort((a, b) => a.subGameName.compareTo(b.subGameName));
   final payload = TicketPayload(
     gameId: game.id,
+    gameSlug: game.slug,
     gameName: game.name,
     lines: sorted
         .map((b) => TicketLine(
@@ -768,6 +765,7 @@ Future<void> _printCombo(
 ) async {
   final payload = TicketPayload(
     gameId: game.id,
+    gameSlug: game.slug,
     gameName: game.name,
     lines: cart.bets
         .map((b) => TicketLine(
@@ -798,6 +796,7 @@ Future<void> _printGana3(
 ) async {
   final payload = TicketPayload(
     gameId: game.id,
+    gameSlug: game.slug,
     gameName: game.name,
     lines: cart.bets
         .map((b) => TicketLine(
@@ -828,6 +827,7 @@ Future<void> _printDates(
 ) async {
   final payload = TicketPayload(
     gameId: game.id,
+    gameSlug: game.slug,
     gameName: game.name,
     lines: cart.bets
         .map((b) => TicketLine(

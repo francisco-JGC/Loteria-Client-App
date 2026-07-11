@@ -90,6 +90,7 @@ void main() {
     when(() => bluetooth.printTicket(any())).thenAnswer((_) async {});
     final payload = TicketPayload(
       gameId: 'diaria',
+      gameSlug: 'diaria',
       gameName: 'Diaria',
       lines: const [
         TicketLine(number: '12', amount: 100, prize: 8000),

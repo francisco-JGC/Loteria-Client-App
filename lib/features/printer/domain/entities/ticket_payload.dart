@@ -24,6 +24,7 @@ class TicketLine extends Equatable {
 class TicketPayload extends Equatable {
   const TicketPayload({
     required this.gameId,
+    required this.gameSlug,
     required this.gameName,
     required this.lines,
     required this.folio,
@@ -34,6 +35,7 @@ class TicketPayload extends Equatable {
   });
 
   final String gameId;
+  final String gameSlug;
   final String gameName;
   final List<TicketLine> lines;
   final String folio;
@@ -48,7 +50,7 @@ class TicketPayload extends Equatable {
 
   String toQrData() {
     return jsonEncode({
-      'g': gameId,
+      'g': gameSlug,
       'f': folio,
       if (client != null) 'c': _ascii(client!),
       'b': lines.map((l) => l.toQrEntry()).toList(),
@@ -71,6 +73,7 @@ class TicketPayload extends Equatable {
   @override
   List<Object?> get props => [
         gameId,
+        gameSlug,
         gameName,
         lines,
         folio,
