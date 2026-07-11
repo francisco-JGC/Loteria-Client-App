@@ -188,9 +188,9 @@ class _QuickGana3BetFormState extends State<QuickGana3BetForm> {
               ),
               GestureDetector(
                 onTap: () => setState(() => _isEasy = !_isEasy),
-                child: Text(
-                  'Fácil  (${_isEasy ? "x100" : "x600 si desmarcado"})',
-                  style: const TextStyle(color: Colors.black87),
+                child: const Text(
+                  'Fácil',
+                  style: TextStyle(color: Colors.black87),
                 ),
               ),
             ],

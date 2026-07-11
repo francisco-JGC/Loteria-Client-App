@@ -18,7 +18,7 @@ class DateBet extends Equatable {
   final int month;
   final int amount;
 
-  int get prize => prizeFor(amount);
+  int get prize => amount * kDateMultiplier;
 
   String get dayLabel => day.toString().padLeft(2, '0');
   String get monthLabel => kMonthAbbreviations[month - 1];
