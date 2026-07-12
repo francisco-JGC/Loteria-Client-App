@@ -15,6 +15,9 @@ import '../../features/games/data/datasources/games_remote_datasource.dart';
 import '../../features/games/data/repositories/games_repository_impl.dart';
 import '../../features/games/domain/repositories/games_repository.dart';
 import '../../features/games/domain/usecases/get_authorized_games.dart';
+import '../../features/lucky/data/datasources/lucky_remote_datasource.dart';
+import '../../features/lucky/data/repositories/lucky_repository_impl.dart';
+import '../../features/lucky/domain/repositories/lucky_repository.dart';
 import '../../features/printer/data/datasources/printer_bluetooth_datasource.dart';
 import '../../features/printer/data/datasources/printer_local_datasource.dart';
 import '../../features/printer/data/repositories/printer_repository_impl.dart';
@@ -78,6 +81,7 @@ Future<void> configureDependencies() async {
   _registerSchedulesFeature();
   _registerTicketsFeature();
   _registerResultsFeature();
+  _registerLuckyFeature();
   _registerSettingsFeature();
   _registerPrinterFeature();
 }
@@ -167,6 +171,16 @@ void _registerResultsFeature() {
     )
     ..registerLazySingleton<ResultsRepository>(
       () => ResultsRepositoryImpl(remote: getIt()),
+    );
+}
+
+void _registerLuckyFeature() {
+  getIt
+    ..registerLazySingleton<LuckyRemoteDatasource>(
+      () => LuckyRemoteDatasourceImpl(client: getIt()),
+    )
+    ..registerLazySingleton<LuckyRepository>(
+      () => LuckyRepositoryImpl(remote: getIt()),
     );
 }
 

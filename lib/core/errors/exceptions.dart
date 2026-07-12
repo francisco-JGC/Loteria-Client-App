@@ -25,3 +25,10 @@ class CacheException implements Exception {
   @override
   String toString() => 'CacheException: $message';
 }
+
+class NotFoundException implements Exception {
+  NotFoundException();
+
+  @override
+  String toString() => 'NotFoundException';
+}

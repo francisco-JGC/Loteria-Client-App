@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/di/injection.dart';
 import 'core/navigation/app_router.dart';
@@ -11,6 +12,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await dotenv.load(fileName: '.env').catchError((_) {});
+  await initializeDateFormatting('es', null);
   await configureDependencies();
 
   runApp(const ProviderScope(child: LoteriaClientApp()));
