@@ -47,9 +47,27 @@ class _GamesGrid extends StatelessWidget {
         final game = games[i];
         return GameCard(
           game: game,
-          onTap: () => context.push('/juegos/${game.id}', extra: game),
+          onTap: () {
+            if (!game.isActive) {
+              _showInactiveSnack(context, game.name);
+              return;
+            }
+            context.push('/juegos/${game.id}', extra: game);
+          },
         );
       },
+    );
+  }
+
+  static void _showInactiveSnack(BuildContext context, String gameName) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('$gameName no está disponible por los momentos.'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 }

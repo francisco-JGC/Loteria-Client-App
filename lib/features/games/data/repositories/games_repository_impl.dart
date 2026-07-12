@@ -42,8 +42,6 @@ class GamesRepositoryImpl implements GamesRepository {
   }
 
   List<Game> _sorted(List<Game> games) {
-    final active = games.where((g) => g.isActive).toList()
-      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-    return active;
+    return [...games]..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
   }
 }
