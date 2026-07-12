@@ -23,7 +23,7 @@ class LuckyQuery {
 }
 
 final luckyProvider = FutureProvider.autoDispose
-    .family<LuckyDaily, LuckyQuery>((ref, q) async {
+    .family<LuckyDaily?, LuckyQuery>((ref, q) async {
   final repo = getIt<LuckyRepository>();
   final result = await repo.findForDate(kind: q.kind, date: q.date);
   return result.fold(

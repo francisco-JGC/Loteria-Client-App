@@ -57,6 +57,14 @@ class _PyramidLuckyPageState extends ConsumerState<PyramidLuckyPage> {
           ],
         ),
         data: (entry) {
+          if (entry == null) {
+            return Column(
+              children: [
+                LuckyDateHeader(date: _date, onTap: _pickDate),
+                const Expanded(child: LuckyEmptyView()),
+              ],
+            );
+          }
           final payload = entry.payload as PyramidLuckyPayload;
           return SingleChildScrollView(
             child: Column(

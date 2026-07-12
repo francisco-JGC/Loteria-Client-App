@@ -56,15 +56,26 @@ class _CrossLuckyPageState extends ConsumerState<CrossLuckyPage> {
             Expanded(child: LuckyErrorView(message: err.toString())),
           ],
         ),
-        data: (entry) => SingleChildScrollView(
-          child: Column(
-            children: [
-              LuckyDateHeader(date: _date, onTap: _pickDate),
-              _CrossView(payload: entry.payload as CrossLuckyPayload),
-              RecommendedSection(numbers: (entry.payload as CrossLuckyPayload).recommended),
-            ],
-          ),
-        ),
+        data: (entry) {
+          if (entry == null) {
+            return Column(
+              children: [
+                LuckyDateHeader(date: _date, onTap: _pickDate),
+                const Expanded(child: LuckyEmptyView()),
+              ],
+            );
+          }
+          final payload = entry.payload as CrossLuckyPayload;
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                LuckyDateHeader(date: _date, onTap: _pickDate),
+                _CrossView(payload: payload),
+                RecommendedSection(numbers: payload.recommended),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

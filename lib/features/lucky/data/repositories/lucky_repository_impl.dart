@@ -12,11 +12,21 @@ class LuckyRepositoryImpl implements LuckyRepository {
   final LuckyRemoteDatasource remote;
 
   @override
-  Future<Either<Failure, LuckyDaily>> findForDate({
+  Future<Either<Failure, LuckyDaily?>> findForDate({
     required LuckyKind kind,
     required DateTime date,
-  }) {
-    return _guard(() => remote.findForDate(kind, date));
+  }) async {
+    try {
+      return Right(await remote.findForDate(kind, date));
+    } on NotFoundException {
+      return const Right(null);
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(UnexpectedFailure(e.toString()));
+    }
   }
 
   @override
