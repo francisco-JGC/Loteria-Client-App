@@ -32,6 +32,8 @@ class AuthRepositoryImpl implements AuthRepository {
       await local.save(session);
       tokenStore.set(session.accessToken);
       return Right(session);
+    } on AccessBlockedException catch (e) {
+      return Left(AccessBlockedFailure(e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {

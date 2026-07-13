@@ -87,7 +87,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       return null;
                     },
                   ),
-                  if (state.errorMessage != null) ...[
+                  if (state.isBlocked) ...[
+                    const SizedBox(height: 16),
+                    _BlockedPanel(message: state.errorMessage),
+                  ] else if (state.errorMessage != null) ...[
                     const SizedBox(height: 12),
                     _ErrorBanner(message: state.errorMessage!),
                   ],
@@ -171,6 +174,76 @@ class _ErrorBanner extends StatelessWidget {
             child: Text(
               message,
               style: TextStyle(color: Colors.red.shade800),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BlockedPanel extends StatelessWidget {
+  const _BlockedPanel({this.message});
+
+  final String? message;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade100,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.lock_outline,
+                  color: Colors.orange.shade700,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Acceso restringido',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.orange.shade900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            message ??
+                'Un administrador restringió el acceso de tu cuenta a la app.',
+            style: TextStyle(
+              fontSize: 13.5,
+              height: 1.4,
+              color: Colors.orange.shade900,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Contacta a un administrador para reactivarla.',
+            style: TextStyle(
+              fontSize: 12.5,
+              color: scheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
         ],

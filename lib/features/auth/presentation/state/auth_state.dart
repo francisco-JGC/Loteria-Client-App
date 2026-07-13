@@ -9,15 +9,19 @@ class AuthState extends Equatable {
     required this.status,
     this.session,
     this.errorMessage,
+    this.isBlocked = false,
     this.isSubmitting = false,
   });
 
   const AuthState.loading() : this._(status: AuthStatus.loading);
 
-  const AuthState.unauthenticated({String? errorMessage})
-      : this._(
+  const AuthState.unauthenticated({
+    String? errorMessage,
+    bool isBlocked = false,
+  }) : this._(
           status: AuthStatus.unauthenticated,
           errorMessage: errorMessage,
+          isBlocked: isBlocked,
         );
 
   const AuthState.authenticated(AuthSession session)
@@ -26,6 +30,11 @@ class AuthState extends Equatable {
   final AuthStatus status;
   final AuthSession? session;
   final String? errorMessage;
+
+  /// True when the last failed sign-in returned HTTP 403 (admin disabled the
+  /// account). Drives a distinct "blocked" panel on the login screen.
+  final bool isBlocked;
+
   final bool isSubmitting;
 
   bool get isAuthenticated => status == AuthStatus.authenticated;
@@ -37,16 +46,19 @@ class AuthState extends Equatable {
     AuthSession? session,
     String? errorMessage,
     bool clearError = false,
+    bool? isBlocked,
     bool? isSubmitting,
   }) {
     return AuthState._(
       status: status ?? this.status,
       session: session ?? this.session,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
+      isBlocked: clearError ? false : isBlocked ?? this.isBlocked,
       isSubmitting: isSubmitting ?? this.isSubmitting,
     );
   }
 
   @override
-  List<Object?> get props => [status, session, errorMessage, isSubmitting];
+  List<Object?> get props =>
+      [status, session, errorMessage, isBlocked, isSubmitting];
 }

@@ -28,3 +28,9 @@ class ValidationFailure extends Failure {
 class UnexpectedFailure extends Failure {
   const UnexpectedFailure(super.message);
 }
+
+/// The seller's access was disabled by an administrator. Surface a distinct
+/// UI (lock icon, explanatory copy) rather than the generic error banner.
+class AccessBlockedFailure extends Failure {
+  const AccessBlockedFailure(super.message);
+}

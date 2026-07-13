@@ -32,3 +32,14 @@ class NotFoundException implements Exception {
   @override
   String toString() => 'NotFoundException';
 }
+
+/// Backend returned HTTP 403 during login: the account exists and the
+/// password is right, but the admin has disabled access.
+class AccessBlockedException implements Exception {
+  AccessBlockedException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'AccessBlockedException: $message';
+}

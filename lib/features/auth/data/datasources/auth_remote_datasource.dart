@@ -39,6 +39,10 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
           e.type == DioExceptionType.receiveTimeout) {
         throw NetworkException(message);
       }
+      // 403 from /auth/login means the admin disabled this account.
+      if (status == 403) {
+        throw AccessBlockedException(message);
+      }
       throw ServerException(message, statusCode: status);
     }
   }

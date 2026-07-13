@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/network/session_events.dart';
 import '../../domain/usecases/load_session.dart';
 import '../../domain/usecases/login.dart';
@@ -44,8 +45,9 @@ class AuthController extends Notifier<AuthState> {
       LoginParams(username: username, password: password),
     );
     result.match(
-      (failure) => state = const AuthState.unauthenticated().copyWith(
+      (failure) => state = AuthState.unauthenticated(
         errorMessage: failure.message,
+        isBlocked: failure is AccessBlockedFailure,
       ),
       (session) => state = AuthState.authenticated(session),
     );
