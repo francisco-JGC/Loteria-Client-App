@@ -4,9 +4,11 @@ import '../../../../core/errors/exceptions.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../domain/entities/create_ticket_request.dart';
 import '../../domain/entities/list_tickets_query.dart';
+import '../../domain/entities/tickets_summary.dart';
 import '../models/ticket_detail_model.dart';
 import '../models/ticket_receipt_model.dart';
 import '../models/ticket_summary_model.dart';
+import '../models/tickets_summary_model.dart';
 
 abstract interface class TicketsRemoteDatasource {
   Future<TicketReceiptModel> create(CreateTicketRequest request);
@@ -18,6 +20,7 @@ abstract interface class TicketsRemoteDatasource {
     required String reason,
   });
   Future<TicketSummaryModel> payTicket(String id);
+  Future<TicketsSummaryModel> summary(TicketsSummaryQuery query);
 }
 
 class TicketsRemoteDatasourceImpl implements TicketsRemoteDatasource {
@@ -106,6 +109,21 @@ class TicketsRemoteDatasourceImpl implements TicketsRemoteDatasource {
       final data = response.data;
       if (data == null) throw ServerException('Empty response from server');
       return TicketSummaryModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  @override
+  Future<TicketsSummaryModel> summary(TicketsSummaryQuery query) async {
+    try {
+      final response = await client.instance.get<Map<String, dynamic>>(
+        '/tickets/summary',
+        queryParameters: query.toQueryParameters(),
+      );
+      final data = response.data;
+      if (data == null) throw ServerException('Empty response from server');
+      return TicketsSummaryModel.fromJson(data);
     } on DioException catch (e) {
       throw _mapError(e);
     }

@@ -6,6 +6,7 @@ import '../entities/list_tickets_query.dart';
 import '../entities/ticket_detail.dart';
 import '../entities/ticket_receipt.dart';
 import '../entities/ticket_summary.dart';
+import '../entities/tickets_summary.dart';
 
 abstract interface class TicketsRepository {
   Future<Either<Failure, TicketReceipt>> create(CreateTicketRequest request);
@@ -16,4 +17,5 @@ abstract interface class TicketsRepository {
     required String reason,
   });
   Future<Either<Failure, TicketSummary>> payTicket(String id);
+  Future<Either<Failure, TicketsSummary>> summary(TicketsSummaryQuery query);
 }

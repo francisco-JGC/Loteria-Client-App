@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../sale_points/presentation/state/active_sale_point_controller.dart';
-import '../../../tickets/domain/entities/list_tickets_query.dart';
+import '../../../tickets/domain/entities/tickets_summary.dart';
 import '../../../tickets/domain/repositories/tickets_repository.dart';
 import '../../domain/entities/movements_summary.dart';
 
@@ -57,31 +57,24 @@ class MovementsController extends AsyncNotifier<MovementsSummary> {
     if (salePoint == null) return MovementsSummary.empty;
     final filters = ref.read(movementsFiltersProvider);
 
-    final result = await _tickets.list(ListTicketsQuery(
+    // Single aggregate call — the server sums `total` and `paid_prize` in
+    // one query, so a busy puesto no longer bumps into pagination limits.
+    final result = await _tickets.summary(TicketsSummaryQuery(
       salePointId: salePoint.id,
       from: filters.from,
       to: filters.to,
-      limit: 500,
     ));
     return result.fold(
       (failure) => throw Exception(failure.message),
-      (list) {
-        var billed = 0;
-        var paidPrize = 0;
-        for (final t in list.items) {
-          if (!t.isVoided) billed += t.total;
-          if (t.isPaid) paidPrize += t.paidPrize;
-        }
+      (s) => MovementsSummary(
+        billed: s.billed,
         // For now: collected == billed (no separate credit tracking yet).
+        collected: s.billed,
+        paidPrize: s.paidPrize,
         // Expenses and salary will come from future modules; leave as 0.
-        return MovementsSummary(
-          billed: billed,
-          collected: billed,
-          paidPrize: paidPrize,
-          expenses: 0,
-          salary: 0,
-        );
-      },
+        expenses: 0,
+        salary: 0,
+      ),
     );
   }
 }
