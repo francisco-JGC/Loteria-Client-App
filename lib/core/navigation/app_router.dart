@@ -11,6 +11,7 @@ import '../../features/games/presentation/screens/game_detail_page.dart';
 import '../../features/games/presentation/screens/games_page.dart';
 import '../../features/lucky/presentation/screens/cross_lucky_page.dart';
 import '../../features/lucky/presentation/screens/pyramid_lucky_page.dart';
+import '../../features/movements/presentation/screens/movements_page.dart';
 import '../../features/printer/presentation/screens/printer_setup_page.dart';
 import '../../features/results/presentation/screens/latest_results_page.dart';
 import '../../features/results/presentation/screens/verify_ticket_page.dart';
@@ -148,7 +149,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/reportes/movimientos',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderPage(title: 'Movimientos'),
+              child: MovementsPage(),
             ),
           ),
           GoRoute(
