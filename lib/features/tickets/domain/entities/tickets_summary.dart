@@ -9,6 +9,8 @@ class TicketsSummary extends Equatable {
     required this.paidCount,
     required this.billed,
     required this.paidPrize,
+    this.salary,
+    this.paymentPercentage,
   });
 
   static const empty = TicketsSummary(
@@ -25,9 +27,24 @@ class TicketsSummary extends Equatable {
   final int billed;
   final int paidPrize;
 
+  /// Seller commission (`billed * paymentPercentage / 100`). Non-null only
+  /// when the query was implicitly or explicitly scoped to a seller AND that
+  /// seller has a `paymentPercentage` configured.
+  final int? salary;
+
+  /// The rate applied by the server to produce `salary`.
+  final int? paymentPercentage;
+
   @override
-  List<Object?> get props =>
-      [ticketCount, voidedCount, paidCount, billed, paidPrize];
+  List<Object?> get props => [
+        ticketCount,
+        voidedCount,
+        paidCount,
+        billed,
+        paidPrize,
+        salary,
+        paymentPercentage,
+      ];
 }
 
 /// Query params for `GET /tickets/summary`. Sellers cannot spy on other

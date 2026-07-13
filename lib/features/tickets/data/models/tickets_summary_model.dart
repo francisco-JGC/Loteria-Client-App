@@ -7,6 +7,8 @@ class TicketsSummaryModel extends TicketsSummary {
     required super.paidCount,
     required super.billed,
     required super.paidPrize,
+    super.salary,
+    super.paymentPercentage,
   });
 
   factory TicketsSummaryModel.fromJson(Map<String, dynamic> json) {
@@ -16,6 +18,8 @@ class TicketsSummaryModel extends TicketsSummary {
       paidCount: (json['paidCount'] as num).toInt(),
       billed: (json['billed'] as num).toInt(),
       paidPrize: (json['paidPrize'] as num).toInt(),
+      salary: (json['salary'] as num?)?.toInt(),
+      paymentPercentage: (json['paymentPercentage'] as num?)?.toInt(),
     );
   }
 }

@@ -71,9 +71,11 @@ class MovementsController extends AsyncNotifier<MovementsSummary> {
         // For now: collected == billed (no separate credit tracking yet).
         collected: s.billed,
         paidPrize: s.paidPrize,
-        // Expenses and salary will come from future modules; leave as 0.
+        // Expenses will come from a future module; leave as 0.
         expenses: 0,
-        salary: 0,
+        // Server-computed commission. Falls back to 0 when the seller has
+        // no `paymentPercentage` configured yet.
+        salary: s.salary ?? 0,
       ),
     );
   }
