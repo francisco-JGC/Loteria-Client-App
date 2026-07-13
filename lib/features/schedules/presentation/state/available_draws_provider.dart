@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/utils/business_time.dart';
 import '../../domain/entities/draw_schedule.dart';
 import '../../domain/repositories/schedules_repository.dart';
 
@@ -34,15 +35,21 @@ final availableDrawsProvider = FutureProvider.autoDispose
   );
   if (schedules.isEmpty) return const [];
 
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
-  final weekday = today.weekday % 7;
+  final now = DateTime.now().toUtc();
+  final biz = BusinessTime.nowInBusinessTz();
+  final weekday = biz.weekday % 7;
   final windows = <AvailableDraw>[];
 
   for (final s in schedules) {
     if (!s.appliesTo(weekday)) continue;
     final t = s.parsedTime;
-    final drawAt = DateTime(today.year, today.month, today.day, t.hour, t.minute);
+    final drawAt = BusinessTime.toUtc(
+      year: biz.year,
+      month: biz.month,
+      day: biz.day,
+      hour: t.hour,
+      minute: t.minute,
+    );
     final lockStart = drawAt.subtract(Duration(minutes: s.cutoffMinutes));
     final lockEnd = drawAt.add(const Duration(minutes: _postDrawGraceMinutes));
     // Skip draws that already started their lock window: user can't sell.

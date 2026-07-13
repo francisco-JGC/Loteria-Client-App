@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/utils/business_time.dart';
 import '../../domain/entities/draw_schedule.dart';
 import '../../domain/repositories/schedules_repository.dart';
 
@@ -90,7 +91,7 @@ class GameLockController extends Notifier<GameLockState> {
       return;
     }
 
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
     final windows = _buildWindows(schedules, now);
 
     for (final w in windows) {
@@ -121,21 +122,30 @@ class GameLockController extends Notifier<GameLockState> {
     state = const GameLockState(status: GameLockStatus.open);
   }
 
-  List<_Window> _buildWindows(List<DrawSchedule> schedules, DateTime now) {
+  List<_Window> _buildWindows(List<DrawSchedule> schedules, DateTime nowUtc) {
     final windows = <_Window>[];
+    final biz = BusinessTime.nowInBusinessTz();
+    // Anchor day iteration at Managua midnight so DOW math is stable
+    // regardless of the device's timezone.
+    final bizToday = DateTime.utc(biz.year, biz.month, biz.day);
     for (int offset = 0; offset <= 7; offset++) {
-      final day = DateTime(now.year, now.month, now.day)
-          .add(Duration(days: offset));
+      final day = bizToday.add(Duration(days: offset));
       final weekday = day.weekday % 7;
       for (final s in schedules) {
         if (!s.appliesTo(weekday)) continue;
         final t = s.parsedTime;
-        final drawAt = DateTime(day.year, day.month, day.day, t.hour, t.minute);
+        final drawAt = BusinessTime.toUtc(
+          year: day.year,
+          month: day.month,
+          day: day.day,
+          hour: t.hour,
+          minute: t.minute,
+        );
         final lockStart =
             drawAt.subtract(Duration(minutes: s.cutoffMinutes));
         final lockEnd =
             drawAt.add(const Duration(minutes: _postDrawGraceMinutes));
-        if (lockEnd.isBefore(now)) continue;
+        if (lockEnd.isBefore(nowUtc)) continue;
         windows.add(_Window(
           drawAt: drawAt,
           lockStart: lockStart,
