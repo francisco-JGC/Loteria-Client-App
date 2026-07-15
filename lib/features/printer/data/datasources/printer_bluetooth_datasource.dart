@@ -239,4 +239,5 @@ class PrinterBluetoothDatasourceImpl implements PrinterBluetoothDatasource {
       0x1D, 0x56, 0x00,
     ];
   }
+
 }
