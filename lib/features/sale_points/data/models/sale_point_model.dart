@@ -5,7 +5,6 @@ class SalePointModel extends SalePoint {
     required super.id,
     required super.name,
     required super.code,
-    required super.ownerId,
     required super.isActive,
   });
 
@@ -14,7 +13,6 @@ class SalePointModel extends SalePoint {
       id: json['id'] as String,
       name: json['name'] as String,
       code: json['code'] as String,
-      ownerId: json['ownerId'] as String,
       isActive: json['isActive'] as bool? ?? true,
     );
   }
