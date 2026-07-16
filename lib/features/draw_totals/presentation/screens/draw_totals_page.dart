@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency.dart';
+import '../../../../core/widgets/date_range_field.dart';
 import '../../../games/domain/entities/game.dart';
 import '../../../games/presentation/state/games_controller.dart';
 import '../../../tickets/domain/entities/tickets_by_draw.dart';
@@ -37,7 +38,13 @@ class DrawTotalsPage extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _DateRangeField(filters: filters),
+            DateRangeField(
+              from: filters.from,
+              to: filters.to,
+              onChanged: (from, to) => ref
+                  .read(drawTotalsFiltersProvider.notifier)
+                  .setRange(from, to),
+            ),
             const SizedBox(height: 16),
             state.when(
               loading: () => const Padding(
@@ -474,102 +481,6 @@ class _StatCell extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _DateRangeField extends ConsumerWidget {
-  const _DateRangeField({required this.filters});
-
-  final DrawTotalsFilters filters;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final fmt = DateFormat('dd/MM/yyyy');
-    final sameDay = filters.from.year == filters.to.year &&
-        filters.from.month == filters.to.month &&
-        filters.from.day == filters.to.day;
-    final label = sameDay
-        ? fmt.format(filters.from)
-        : '${fmt.format(filters.from)}  /  ${fmt.format(filters.to)}';
-
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () => _pickRange(context, ref),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          decoration: BoxDecoration(
-            border: Border.all(color: AppTheme.primary.withValues(alpha: 0.35)),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.calendar_month_outlined,
-                  color: AppTheme.primary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      sameDay ? 'Fecha' : 'Rango de fechas',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.tune, color: AppTheme.primary, size: 20),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _pickRange(BuildContext context, WidgetRef ref) async {
-    final now = DateTime.now();
-    final picked = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(now.year - 2),
-      lastDate: DateTime(now.year + 1),
-      initialDateRange: DateTimeRange(start: filters.from, end: filters.to),
-    );
-    if (picked == null) return;
-    ref.read(drawTotalsFiltersProvider.notifier).setRange(
-          picked.start,
-          DateTime(
-            picked.end.year,
-            picked.end.month,
-            picked.end.day,
-            23,
-            59,
-            59,
-          ),
-        );
   }
 }
 

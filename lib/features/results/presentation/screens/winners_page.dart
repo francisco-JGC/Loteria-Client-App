@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/utils/currency.dart';
 import '../../../../core/utils/time_format.dart';
+import '../../../../core/widgets/date_range_field.dart';
 import '../../../games/domain/entities/game.dart';
 import '../../../games/presentation/state/games_controller.dart';
 import '../../domain/entities/winning_ticket.dart';
@@ -41,8 +42,28 @@ class WinnersPage extends ConsumerWidget {
       bottomNavigationBar: _TotalsBar(tickets: state.value ?? const []),
       body: Column(
         children: [
-          _DateRangeBar(filters: filters),
-          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: Builder(builder: (context) {
+              final now = DateTime.now();
+              final today = DateTime(now.year, now.month, now.day);
+              final endOfDay = DateTime(
+                now.year,
+                now.month,
+                now.day,
+                23,
+                59,
+                59,
+              );
+              return DateRangeField(
+                from: filters.from ?? today.subtract(const Duration(days: 3)),
+                to: filters.to ?? endOfDay,
+                onChanged: (from, to) => ref
+                    .read(winnersFiltersProvider.notifier)
+                    .set(from: from, to: to),
+              );
+            }),
+          ),
           Expanded(
             child: state.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -72,70 +93,6 @@ class WinnersPage extends ConsumerWidget {
         ],
       ),
     );
-  }
-}
-
-class _DateRangeBar extends ConsumerWidget {
-  const _DateRangeBar({required this.filters});
-
-  final WinnersFilters filters;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final label = _rangeLabel(filters);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          const Icon(Icons.date_range, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextButton(
-              style: TextButton.styleFrom(
-                alignment: Alignment.centerLeft,
-                padding: EdgeInsets.zero,
-              ),
-              onPressed: () => _pickRange(context, ref),
-              child: Text(label),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _rangeLabel(WinnersFilters f) {
-    final fmt = DateFormat('dd/MM/yyyy');
-    if (f.from == null && f.to == null) return 'Sin filtro';
-    final from = f.from == null ? '—' : fmt.format(f.from!);
-    final to = f.to == null ? '—' : fmt.format(f.to!);
-    return 'Del $from al $to';
-  }
-
-  Future<void> _pickRange(BuildContext context, WidgetRef ref) async {
-    final now = DateTime.now();
-    final initial = DateTimeRange(
-      start: filters.from ?? now.subtract(const Duration(days: 3)),
-      end: filters.to ?? now,
-    );
-    final picked = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(now.year - 1),
-      lastDate: DateTime(now.year + 1),
-      initialDateRange: initial,
-    );
-    if (picked == null) return;
-    ref.read(winnersFiltersProvider.notifier).set(
-          from: picked.start,
-          to: DateTime(
-            picked.end.year,
-            picked.end.month,
-            picked.end.day,
-            23,
-            59,
-            59,
-          ),
-        );
   }
 }
 

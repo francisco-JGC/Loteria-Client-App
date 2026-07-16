@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/time_format.dart';
+import '../../../../core/widgets/date_range_field.dart';
 import '../../../games/domain/entities/game.dart';
 import '../../../games/presentation/state/games_controller.dart';
 import '../../domain/entities/draw_result.dart';
@@ -19,15 +20,15 @@ class LatestResultsPage extends ConsumerWidget {
     final gamesById = {for (final g in games) g.id: g};
     final filters = ref.watch(latestResultsFiltersProvider);
 
+    final now = DateTime.now();
+    final defaultFrom =
+        DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
+    final defaultTo = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Últimos Resultados'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_alt_outlined),
-            tooltip: 'Filtros',
-            onPressed: () => _openFilters(context, ref, games),
-          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refrescar',
@@ -39,7 +40,17 @@ class LatestResultsPage extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          if (filters.hasAny) _FiltersSummary(filters: filters, games: games),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: DateRangeField(
+              from: filters.from ?? defaultFrom,
+              to: filters.to ?? defaultTo,
+              onChanged: (from, to) => ref
+                  .read(latestResultsFiltersProvider.notifier)
+                  .update(from: from, to: to),
+            ),
+          ),
+          _GameFilterBar(games: games, filters: filters),
           Expanded(
             child: state.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -71,248 +82,171 @@ class LatestResultsPage extends ConsumerWidget {
       ),
     );
   }
-
-  Future<void> _openFilters(
-    BuildContext context,
-    WidgetRef ref,
-    List<Game> games,
-  ) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => _FiltersSheet(games: games),
-    );
-  }
 }
 
-class _FiltersSummary extends ConsumerWidget {
-  const _FiltersSummary({required this.filters, required this.games});
+class _GameFilterBar extends ConsumerWidget {
+  const _GameFilterBar({required this.games, required this.filters});
 
-  final LatestResultsFilters filters;
   final List<Game> games;
+  final LatestResultsFilters filters;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final gameName = filters.gameId == null
+    final selected = filters.gameId == null
         ? null
         : games
             .where((g) => g.id == filters.gameId)
-            .fold<Game?>(null, (acc, g) => acc ?? g)
-            ?.name;
-    final rangeLabel = _rangeLabel(filters);
+            .fold<Game?>(null, (acc, g) => acc ?? g);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 4,
-        children: [
-          if (gameName != null)
-            _FilterChipDisplay(
-              icon: Icons.videogame_asset_outlined,
-              label: gameName,
-              onClear: () => ref
-                  .read(latestResultsFiltersProvider.notifier)
-                  .update(clearGame: true),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _openGamePicker(context, ref),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade200),
+              borderRadius: BorderRadius.circular(12),
             ),
-          if (rangeLabel != null)
-            _FilterChipDisplay(
-              icon: Icons.date_range,
-              label: rangeLabel,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.videogame_asset_outlined,
+                  color: AppTheme.primary,
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Juego:',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    selected?.name ?? 'Todos',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                if (selected != null)
+                  InkWell(
+                    onTap: () => ref
+                        .read(latestResultsFiltersProvider.notifier)
+                        .update(clearGame: true),
+                    borderRadius: BorderRadius.circular(999),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.close, size: 16),
+                    ),
+                  ),
+                Icon(
+                  Icons.arrow_drop_down,
+                  color: Colors.grey.shade500,
+                ),
+              ],
             ),
-        ],
-      ),
-    );
-  }
-
-  String? _rangeLabel(LatestResultsFilters f) {
-    if (f.from == null && f.to == null) return null;
-    final fmt = DateFormat('dd/MM/yyyy');
-    final from = f.from == null ? '—' : fmt.format(f.from!);
-    final to = f.to == null ? '—' : fmt.format(f.to!);
-    return '$from → $to';
-  }
-}
-
-class _FilterChipDisplay extends StatelessWidget {
-  const _FilterChipDisplay({
-    required this.icon,
-    required this.label,
-    this.onClear,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.accentSoft,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: AppTheme.primary),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           ),
-          if (onClear != null) ...[
-            const SizedBox(width: 4),
-            InkWell(
-              onTap: onClear,
-              child: const Icon(Icons.close, size: 14),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
-}
 
-class _FiltersSheet extends ConsumerStatefulWidget {
-  const _FiltersSheet({required this.games});
-
-  final List<Game> games;
-
-  @override
-  ConsumerState<_FiltersSheet> createState() => _FiltersSheetState();
-}
-
-class _FiltersSheetState extends ConsumerState<_FiltersSheet> {
-  late String? _gameId;
-  late DateTime? _from;
-  late DateTime? _to;
-
-  @override
-  void initState() {
-    super.initState();
-    final f = ref.read(latestResultsFiltersProvider);
-    _gameId = f.gameId;
-    _from = f.from;
-    _to = f.to;
-  }
-
-  Future<void> _pickRange() async {
-    final now = DateTime.now();
-    final initial = DateTimeRange(
-      start: _from ?? now.subtract(const Duration(days: 6)),
-      end: _to ?? now,
-    );
-    final picked = await showDateRangePicker(
+  Future<void> _openGamePicker(BuildContext context, WidgetRef ref) async {
+    final picked = await showModalBottomSheet<_GamePick>(
       context: context,
-      firstDate: DateTime(now.year - 2),
-      lastDate: DateTime(now.year + 1),
-      initialDateRange: initial,
+      showDragHandle: true,
+      builder: (_) => _GamePickerSheet(
+        games: games,
+        currentId: filters.gameId,
+      ),
     );
-    if (picked != null) {
-      setState(() {
-        _from = picked.start;
-        _to = DateTime(
-          picked.end.year,
-          picked.end.month,
-          picked.end.day,
-          23,
-          59,
-          59,
-        );
-      });
+    if (picked == null) return;
+    if (picked.clear) {
+      ref.read(latestResultsFiltersProvider.notifier).update(clearGame: true);
+    } else if (picked.gameId != null) {
+      ref
+          .read(latestResultsFiltersProvider.notifier)
+          .update(gameId: picked.gameId);
     }
   }
+}
+
+class _GamePick {
+  const _GamePick({this.gameId, this.clear = false});
+  final String? gameId;
+  final bool clear;
+}
+
+class _GamePickerSheet extends StatelessWidget {
+  const _GamePickerSheet({required this.games, required this.currentId});
+
+  final List<Game> games;
+  final String? currentId;
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat('dd/MM/yyyy');
-    final rangeLabel = _from == null || _to == null
-        ? 'Selecciona un rango'
-        : '${fmt.format(_from!)}  →  ${fmt.format(_to!)}';
-
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 8,
-        bottom: 16 + MediaQuery.viewInsetsOf(context).bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Filtros',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String?>(
-            initialValue: _gameId,
-            decoration: const InputDecoration(
-              labelText: 'Juego',
-              prefixIcon: Icon(Icons.videogame_asset_outlined),
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 4, 20, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Filtrar por juego',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                ),
+              ),
             ),
-            items: [
-              const DropdownMenuItem<String?>(
-                value: null,
-                child: Text('Todos los juegos'),
+            ListTile(
+              leading: Icon(
+                Icons.public,
+                color: currentId == null ? AppTheme.primary : Colors.grey,
               ),
-              for (final g in widget.games)
-                DropdownMenuItem<String?>(
-                  value: g.id,
-                  child: Text(g.name),
-                ),
-            ],
-            onChanged: (value) => setState(() => _gameId = value),
-          ),
-          const SizedBox(height: 12),
-          InkWell(
-            onTap: _pickRange,
-            borderRadius: BorderRadius.circular(12),
-            child: InputDecorator(
-              decoration: const InputDecoration(
-                labelText: 'Rango de fechas',
-                prefixIcon: Icon(Icons.date_range),
-              ),
-              child: Text(rangeLabel),
+              title: const Text('Todos los juegos'),
+              trailing: currentId == null
+                  ? const Icon(Icons.check, color: AppTheme.primary)
+                  : null,
+              onTap: () =>
+                  Navigator.of(context).pop(const _GamePick(clear: true)),
             ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    ref
-                        .read(latestResultsFiltersProvider.notifier)
-                        .clear();
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Limpiar'),
-                ),
+            const Divider(height: 1),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: games.length,
+                itemBuilder: (context, i) {
+                  final g = games[i];
+                  final selected = g.id == currentId;
+                  return ListTile(
+                    leading: Icon(
+                      Icons.videogame_asset_outlined,
+                      color: selected ? AppTheme.primary : Colors.grey.shade500,
+                    ),
+                    title: Text(g.name),
+                    trailing: selected
+                        ? const Icon(Icons.check, color: AppTheme.primary)
+                        : null,
+                    onTap: () =>
+                        Navigator.of(context).pop(_GamePick(gameId: g.id)),
+                  );
+                },
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton(
-                  onPressed: () {
-                    ref.read(latestResultsFiltersProvider.notifier).update(
-                          gameId: _gameId,
-                          from: _from,
-                          to: _to,
-                          clearGame: _gameId == null,
-                        );
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Aplicar'),
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -394,83 +328,45 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
+          colors: [AppTheme.primary, AppTheme.accent],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [AppTheme.accentSoft, Colors.white],
         ),
       ),
       child: Row(
         children: [
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'JUEGO',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.grey.shade600,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  gameName,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black87,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+            child: Text(
+              gameName,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: 0.3,
+              ),
             ),
           ),
-          const SizedBox(width: 12),
-          _WinnerBadge(value: winningNumber),
-        ],
-      ),
-    );
-  }
-}
-
-class _WinnerBadge extends StatelessWidget {
-  const _WinnerBadge({required this.value});
-
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppTheme.primary, AppTheme.accent],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primary.withValues(alpha: 0.35),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              winningNumber,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: 1.5,
+                fontFamily: 'monospace',
+              ),
+            ),
           ),
         ],
-      ),
-      child: Text(
-        value,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 24,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 1.2,
-        ),
       ),
     );
   }
@@ -491,22 +387,20 @@ class _MetaRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppTheme.primary),
+        Icon(icon, size: 16, color: Colors.grey.shade600),
         const SizedBox(width: 8),
         Text(
-          label,
-          style: TextStyle(
-            color: Colors.grey.shade600,
-            fontSize: 13,
-          ),
+          '$label:',
+          style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
         ),
-        const Spacer(),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: Colors.black87,
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],
@@ -519,20 +413,18 @@ class _EmptyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.emoji_events_outlined, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'No hay resultados que coincidan con los filtros.',
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.event_busy_outlined, size: 44, color: Colors.grey.shade400),
+          const SizedBox(height: 12),
+          const Text(
+            'No hay resultados en el rango seleccionado.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black54),
+          ),
+        ],
       ),
     );
   }
@@ -552,10 +444,10 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            Icon(Icons.error_outline, color: Colors.red.shade400, size: 40),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             FilledButton.icon(
               icon: const Icon(Icons.refresh),
               label: const Text('Reintentar'),
