@@ -7,6 +7,7 @@ import '../../features/auth/presentation/screens/splash_page.dart';
 import '../../features/auth/presentation/state/auth_controller.dart';
 import '../../features/auth/presentation/state/auth_state.dart';
 import '../../features/draw_totals/presentation/screens/draw_totals_page.dart';
+import '../../features/dream_guide/presentation/screens/dream_guide_page.dart';
 import '../../features/games/domain/entities/game.dart';
 import '../../features/games/presentation/screens/game_detail_page.dart';
 import '../../features/games/presentation/screens/games_page.dart';
@@ -24,7 +25,6 @@ import '../../features/sales/presentation/screens/scan_ticket_page.dart';
 import '../../features/settings/presentation/screens/settings_page.dart';
 import '../../features/tickets/presentation/screens/ticket_detail_page.dart';
 import '../../features/tickets/presentation/screens/tickets_history_page.dart';
-import '../widgets/placeholder_page.dart';
 import 'app_shell.dart';
 
 const _selectPointRoute = '/seleccionar-puesto';
@@ -156,7 +156,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/herramientas/guia-suenos',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderPage(title: 'Guía de Sueños'),
+              child: DreamGuidePage(),
             ),
           ),
           GoRoute(
