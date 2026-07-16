@@ -12,6 +12,7 @@ class TicketSummaryModel extends TicketSummary {
     required super.count,
     required super.drawAt,
     required super.cutoffMinutes,
+    required super.drawExecuted,
     required super.createdAt,
     required super.voidedAt,
     required super.voidedReason,
@@ -31,6 +32,7 @@ class TicketSummaryModel extends TicketSummary {
       count: (json['count'] as num).toInt(),
       drawAt: DateTime.parse(json['drawAt'] as String),
       cutoffMinutes: (json['cutoffMinutes'] as num).toInt(),
+      drawExecuted: json['drawExecuted'] as bool? ?? false,
       createdAt: DateTime.parse(json['createdAt'] as String),
       voidedAt: json['voidedAt'] == null
           ? null

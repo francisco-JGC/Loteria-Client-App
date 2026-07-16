@@ -24,6 +24,7 @@ class TicketSummary extends Equatable {
     required this.count,
     required this.drawAt,
     required this.cutoffMinutes,
+    required this.drawExecuted,
     required this.createdAt,
     required this.voidedAt,
     required this.voidedReason,
@@ -41,6 +42,7 @@ class TicketSummary extends Equatable {
   final int count;
   final DateTime drawAt;
   final int cutoffMinutes;
+  final bool drawExecuted;
   final DateTime createdAt;
   final DateTime? voidedAt;
   final String? voidedReason;
@@ -52,6 +54,7 @@ class TicketSummary extends Equatable {
 
   bool canBeVoidedAt(DateTime now) {
     if (isVoided) return false;
+    if (drawExecuted) return false;
     final minutesUntil = drawAt.difference(now).inSeconds / 60.0;
     return minutesUntil > cutoffMinutes;
   }
@@ -68,6 +71,7 @@ class TicketSummary extends Equatable {
         count,
         drawAt,
         cutoffMinutes,
+        drawExecuted,
         createdAt,
         voidedAt,
         voidedReason,
