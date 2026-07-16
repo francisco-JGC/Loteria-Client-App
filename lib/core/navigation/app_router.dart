@@ -6,6 +6,7 @@ import '../../features/auth/presentation/screens/login_page.dart';
 import '../../features/auth/presentation/screens/splash_page.dart';
 import '../../features/auth/presentation/state/auth_controller.dart';
 import '../../features/auth/presentation/state/auth_state.dart';
+import '../../features/draw_totals/presentation/screens/draw_totals_page.dart';
 import '../../features/games/domain/entities/game.dart';
 import '../../features/games/presentation/screens/game_detail_page.dart';
 import '../../features/games/presentation/screens/games_page.dart';
@@ -131,7 +132,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/reportes/totales-sorteos',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderPage(title: 'Totales Sorteos'),
+              child: DrawTotalsPage(),
             ),
           ),
           GoRoute(

@@ -7,6 +7,7 @@ import '../../domain/entities/list_tickets_query.dart';
 import '../../domain/entities/ticket_detail.dart';
 import '../../domain/entities/ticket_receipt.dart';
 import '../../domain/entities/ticket_summary.dart';
+import '../../domain/entities/tickets_by_draw.dart';
 import '../../domain/entities/tickets_summary.dart';
 import '../../domain/repositories/tickets_repository.dart';
 import '../datasources/tickets_remote_datasource.dart';
@@ -59,6 +60,16 @@ class TicketsRepositoryImpl implements TicketsRepository {
   @override
   Future<Either<Failure, TicketsSummary>> summary(TicketsSummaryQuery query) {
     return _guard(() => remote.summary(query));
+  }
+
+  @override
+  Future<Either<Failure, List<TicketsByDrawItem>>> byDraw(
+    TicketsByDrawQuery query,
+  ) {
+    return _guard(() async {
+      final list = await remote.byDraw(query);
+      return list.cast<TicketsByDrawItem>();
+    });
   }
 
   Future<Either<Failure, T>> _guard<T>(Future<T> Function() run) async {
