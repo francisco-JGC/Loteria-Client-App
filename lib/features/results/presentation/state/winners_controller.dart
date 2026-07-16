@@ -20,8 +20,7 @@ class WinnersFiltersNotifier extends Notifier<WinnersFilters> {
   WinnersFilters build() {
     final now = DateTime.now();
     return WinnersFilters(
-      from: DateTime(now.year, now.month, now.day)
-          .subtract(const Duration(days: 3)),
+      from: DateTime(now.year, now.month, now.day),
       to: DateTime(now.year, now.month, now.day, 23, 59, 59),
     );
   }

@@ -56,7 +56,7 @@ class WinnersPage extends ConsumerWidget {
                 59,
               );
               return DateRangeField(
-                from: filters.from ?? today.subtract(const Duration(days: 3)),
+                from: filters.from ?? today,
                 to: filters.to ?? endOfDay,
                 onChanged: (from, to) => ref
                     .read(winnersFiltersProvider.notifier)

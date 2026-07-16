@@ -21,8 +21,7 @@ class LatestResultsPage extends ConsumerWidget {
     final filters = ref.watch(latestResultsFiltersProvider);
 
     final now = DateTime.now();
-    final defaultFrom =
-        DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
+    final defaultFrom = DateTime(now.year, now.month, now.day);
     final defaultTo = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
     return Scaffold(

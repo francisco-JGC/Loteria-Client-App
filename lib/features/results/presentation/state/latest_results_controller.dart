@@ -27,8 +27,7 @@ class LatestResultsFiltersNotifier extends Notifier<LatestResultsFilters> {
   LatestResultsFilters build() {
     final now = DateTime.now();
     return LatestResultsFilters(
-      from: DateTime(now.year, now.month, now.day)
-          .subtract(const Duration(days: 6)),
+      from: DateTime(now.year, now.month, now.day),
       to: DateTime(now.year, now.month, now.day, 23, 59, 59),
     );
   }
