@@ -1,6 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../../../../core/utils/business_time.dart';
 import '../entities/draw_result.dart';
 import '../entities/ticket_evaluation.dart';
 import '../entities/winning_ticket.dart';
@@ -20,8 +21,8 @@ class ListDrawResultsQuery {
 
   Map<String, dynamic> toQueryParameters() => {
         if (gameId != null) 'gameId': gameId,
-        if (from != null) 'from': from!.toUtc().toIso8601String(),
-        if (to != null) 'to': to!.toUtc().toIso8601String(),
+        if (from != null) 'from': BusinessTime.toBusinessIso(from!),
+        if (to != null) 'to': BusinessTime.toBusinessIso(to!),
         if (limit != null) 'limit': limit,
       };
 }
@@ -42,8 +43,8 @@ class ListWinnersQuery {
   Map<String, dynamic> toQueryParameters() => {
         if (salePointId != null) 'salePointId': salePointId,
         if (gameId != null) 'gameId': gameId,
-        if (from != null) 'from': from!.toUtc().toIso8601String(),
-        if (to != null) 'to': to!.toUtc().toIso8601String(),
+        if (from != null) 'from': BusinessTime.toBusinessIso(from!),
+        if (to != null) 'to': BusinessTime.toBusinessIso(to!),
       };
 }
 

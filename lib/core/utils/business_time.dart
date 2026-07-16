@@ -41,4 +41,15 @@ class BusinessTime {
     // Managua = UTC-6, so UTC hour = local hour + 6.
     return DateTime.utc(year, month, day, hour - _hoursFromUtc, minute);
   }
+
+  /// Formats a DateTime whose y/m/d/h/m/s components are intended as Managua
+  /// wall-clock time into an ISO 8601 string with an explicit `-06:00` offset.
+  /// Use this for query params like `from`/`to` when the DateTime came from a
+  /// date picker or `DateTime.now()` — device TZ is ignored, only the numeric
+  /// components matter. Mirrors what the web client sends.
+  static String toBusinessIso(DateTime dt) {
+    String pad(int n, [int width = 2]) => n.toString().padLeft(width, '0');
+    return '${pad(dt.year, 4)}-${pad(dt.month)}-${pad(dt.day)}'
+        'T${pad(dt.hour)}:${pad(dt.minute)}:${pad(dt.second)}-06:00';
+  }
 }

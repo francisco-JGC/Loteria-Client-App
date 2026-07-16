@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/utils/business_time.dart';
 import 'ticket_summary.dart';
 
 class ListTicketsQuery extends Equatable {
@@ -25,8 +26,8 @@ class ListTicketsQuery extends Equatable {
         if (salePointId != null) 'salePointId': salePointId,
         if (gameId != null) 'gameId': gameId,
         if (status != null) 'status': status == TicketStatus.voided ? 'voided' : 'valid',
-        if (from != null) 'from': from!.toUtc().toIso8601String(),
-        if (to != null) 'to': to!.toUtc().toIso8601String(),
+        if (from != null) 'from': BusinessTime.toBusinessIso(from!),
+        if (to != null) 'to': BusinessTime.toBusinessIso(to!),
         'page': page,
         'limit': limit,
       };

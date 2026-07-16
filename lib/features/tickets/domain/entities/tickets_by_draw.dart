@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/utils/business_time.dart';
+
 /// One row per (game, drawAt) that had at least one ticket in the requested
 /// window. Returned by `GET /tickets/by-draw`.
 class TicketsByDrawItem extends Equatable {
@@ -57,8 +59,8 @@ class TicketsByDrawQuery extends Equatable {
         if (salePointId != null) 'salePointId': salePointId,
         if (gameId != null) 'gameId': gameId,
         if (sellerId != null) 'sellerId': sellerId,
-        if (from != null) 'from': from!.toUtc().toIso8601String(),
-        if (to != null) 'to': to!.toUtc().toIso8601String(),
+        if (from != null) 'from': BusinessTime.toBusinessIso(from!),
+        if (to != null) 'to': BusinessTime.toBusinessIso(to!),
       };
 
   @override

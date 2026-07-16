@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/utils/business_time.dart';
+
 /// Aggregate totals for a set of tickets, returned by `GET /tickets/summary`.
 /// Amounts are in the same integer unit the API uses everywhere else.
 class TicketsSummary extends Equatable {
@@ -69,8 +71,8 @@ class TicketsSummaryQuery extends Equatable {
         if (salePointId != null) 'salePointId': salePointId,
         if (gameId != null) 'gameId': gameId,
         if (sellerId != null) 'sellerId': sellerId,
-        if (from != null) 'from': from!.toUtc().toIso8601String(),
-        if (to != null) 'to': to!.toUtc().toIso8601String(),
+        if (from != null) 'from': BusinessTime.toBusinessIso(from!),
+        if (to != null) 'to': BusinessTime.toBusinessIso(to!),
       };
 
   @override
