@@ -30,6 +30,9 @@ import '../../features/printer/domain/usecases/print_ticket.dart';
 import '../../features/results/data/datasources/results_remote_datasource.dart';
 import '../../features/results/data/repositories/results_repository_impl.dart';
 import '../../features/results/domain/repositories/results_repository.dart';
+import '../../features/sale_limits/data/datasources/sale_limits_remote_datasource.dart';
+import '../../features/sale_limits/data/repositories/sale_limits_repository_impl.dart';
+import '../../features/sale_limits/domain/repositories/sale_limits_repository.dart';
 import '../../features/sale_points/data/datasources/sale_points_local_datasource.dart';
 import '../../features/sale_points/data/datasources/sale_points_remote_datasource.dart';
 import '../../features/sale_points/data/repositories/sale_points_repository_impl.dart';
@@ -81,6 +84,7 @@ Future<void> configureDependencies() async {
   _registerSchedulesFeature();
   _registerTicketsFeature();
   _registerResultsFeature();
+  _registerSaleLimitsFeature();
   _registerLuckyFeature();
   _registerSettingsFeature();
   _registerPrinterFeature();
@@ -171,6 +175,16 @@ void _registerResultsFeature() {
     )
     ..registerLazySingleton<ResultsRepository>(
       () => ResultsRepositoryImpl(remote: getIt()),
+    );
+}
+
+void _registerSaleLimitsFeature() {
+  getIt
+    ..registerLazySingleton<SaleLimitsRemoteDatasource>(
+      () => SaleLimitsRemoteDatasourceImpl(client: getIt()),
+    )
+    ..registerLazySingleton<SaleLimitsRepository>(
+      () => SaleLimitsRepositoryImpl(remote: getIt()),
     );
 }
 

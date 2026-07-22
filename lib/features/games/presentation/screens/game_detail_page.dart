@@ -7,6 +7,8 @@ import '../../../../core/utils/currency.dart';
 import '../../../../core/utils/time_format.dart';
 import '../../../printer/domain/entities/ticket_payload.dart';
 import '../../../printer/presentation/state/printer_controller.dart';
+import '../../../sale_limits/presentation/state/sale_limit_availability_provider.dart';
+import '../../../sale_limits/presentation/widgets/sale_limits_banner.dart';
 import '../../../sale_points/presentation/state/active_sale_point_controller.dart';
 import '../../../sales/presentation/state/cart_controller.dart';
 import '../../../sales/presentation/state/cart_state.dart';
@@ -108,6 +110,7 @@ class _RegularGameView extends ConsumerWidget {
       ),
       body: Column(
         children: [
+          SaleLimitsBannerAuto(gameId: game.id),
           QuickBetForm(onSubmit: controller.addSingle),
           Expanded(
             child: cart.isEmpty
@@ -225,6 +228,7 @@ class _DateGameView extends ConsumerWidget {
       ),
       body: Column(
         children: [
+          SaleLimitsBannerAuto(gameId: game.id),
           QuickDateBetForm(onSubmit: controller.addSingle),
           Expanded(
             child: cart.isEmpty
@@ -324,6 +328,7 @@ class _MultiSorteoGameViewState
             }),
           ),
           if (sub != null) ...[
+            SaleLimitsBannerAuto(gameId: sub.id),
             _cartBodyFor(sub),
             _AvailableDrawsSelector(
               gameId: sub.id,
@@ -920,6 +925,7 @@ class _ComboGameView extends ConsumerWidget {
       ),
       body: Column(
         children: [
+          SaleLimitsBannerAuto(gameId: game.id),
           QuickComboBetForm(onSubmit: controller.addSingle),
           Expanded(
             child: cart.isEmpty
@@ -1021,6 +1027,7 @@ class _Gana3GameView extends ConsumerWidget {
       ),
       body: Column(
         children: [
+          SaleLimitsBannerAuto(gameId: game.id),
           QuickGana3BetForm(onSubmit: controller.addSingle),
           Expanded(
             child: cart.isEmpty
@@ -1327,6 +1334,11 @@ Future<void> _persistAndPrint(
     (r) => r,
   );
   if (receipt == null) return;
+
+  // Fresh sale — invalidate availability so the banner reflects the new
+  // usage on next fetch. Family-level invalidation covers every (game,
+  // sucursal, drawAt) combo cached, which is safest across pickers.
+  ref.invalidate(saleLimitAvailabilityProvider);
 
   final payload = buildPayload(receipt);
   await ref.read(printerControllerProvider.notifier).printTicket(payload);
