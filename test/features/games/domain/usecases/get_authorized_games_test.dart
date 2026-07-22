@@ -25,7 +25,7 @@ void main() {
         slug: 'diaria',
         name: 'Diaria',
         type: GameType.regular,
-        mainMultiplier: 80,
+        exactMultiplier: 80,
       ),
     ];
     when(() => repository.getAuthorizedGames())

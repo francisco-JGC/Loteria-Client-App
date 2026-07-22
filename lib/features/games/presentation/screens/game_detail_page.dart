@@ -1484,12 +1484,12 @@ int _rescalePrize(int amount, int existingPrize, EffectiveGamePrize? o) {
   if (existingPrize % amount != 0) return existingPrize;
   final implicit = existingPrize ~/ amount;
 
-  if (o.mainDefault != null && implicit == o.mainDefault) {
-    final target = o.mainMultiplier ?? o.mainDefault!;
+  if (o.exactDefault != null && implicit == o.exactDefault) {
+    final target = o.exactMultiplier ?? o.exactDefault!;
     return amount * target;
   }
-  if (o.secondaryDefault != null && implicit == o.secondaryDefault) {
-    final target = o.secondaryMultiplier ?? o.secondaryDefault!;
+  if (o.easyDefault != null && implicit == o.easyDefault) {
+    final target = o.easyMultiplier ?? o.easyDefault!;
     return amount * target;
   }
   return existingPrize;

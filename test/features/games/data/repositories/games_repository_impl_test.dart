@@ -15,7 +15,7 @@ const _sample = GameModel(
   slug: 'diaria',
   name: 'Diaria',
   type: GameType.regular,
-  mainMultiplier: 80,
+  exactMultiplier: 80,
   orderIndex: 1,
 );
 

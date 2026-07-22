@@ -4,10 +4,10 @@ class EffectiveGamePrizeModel extends EffectiveGamePrize {
   const EffectiveGamePrizeModel({
     required super.gameId,
     required super.gameName,
-    required super.mainDefault,
-    required super.secondaryDefault,
-    required super.mainMultiplier,
-    required super.secondaryMultiplier,
+    required super.exactDefault,
+    required super.easyDefault,
+    required super.exactMultiplier,
+    required super.easyMultiplier,
     required super.hasOverride,
   });
 
@@ -16,10 +16,10 @@ class EffectiveGamePrizeModel extends EffectiveGamePrize {
     return EffectiveGamePrizeModel(
       gameId: json['gameId'] as String,
       gameName: json['gameName'] as String,
-      mainDefault: asInt(json['mainDefault']),
-      secondaryDefault: asInt(json['secondaryDefault']),
-      mainMultiplier: asInt(json['mainMultiplier']),
-      secondaryMultiplier: asInt(json['secondaryMultiplier']),
+      exactDefault: asInt(json['exactDefault']),
+      easyDefault: asInt(json['easyDefault']),
+      exactMultiplier: asInt(json['exactMultiplier']),
+      easyMultiplier: asInt(json['easyMultiplier']),
       hasOverride: json['hasOverride'] as bool? ?? false,
     );
   }

@@ -8,29 +8,29 @@ class EffectiveGamePrize extends Equatable {
   const EffectiveGamePrize({
     required this.gameId,
     required this.gameName,
-    required this.mainDefault,
-    required this.secondaryDefault,
-    required this.mainMultiplier,
-    required this.secondaryMultiplier,
+    required this.exactDefault,
+    required this.easyDefault,
+    required this.exactMultiplier,
+    required this.easyMultiplier,
     required this.hasOverride,
   });
 
   final String gameId;
   final String gameName;
-  final int? mainDefault;
-  final int? secondaryDefault;
-  final int? mainMultiplier;
-  final int? secondaryMultiplier;
+  final int? exactDefault;
+  final int? easyDefault;
+  final int? exactMultiplier;
+  final int? easyMultiplier;
   final bool hasOverride;
 
   @override
   List<Object?> get props => [
         gameId,
         gameName,
-        mainDefault,
-        secondaryDefault,
-        mainMultiplier,
-        secondaryMultiplier,
+        exactDefault,
+        easyDefault,
+        exactMultiplier,
+        easyMultiplier,
         hasOverride,
       ];
 }

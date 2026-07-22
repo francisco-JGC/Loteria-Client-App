@@ -8,8 +8,8 @@ class Game extends Equatable {
     required this.slug,
     required this.name,
     required this.type,
-    this.mainMultiplier,
-    this.secondaryMultiplier,
+    this.exactMultiplier,
+    this.easyMultiplier,
     this.imagePath,
     this.orderIndex = 0,
     this.isActive = true,
@@ -19,8 +19,8 @@ class Game extends Equatable {
   final String slug;
   final String name;
   final GameType type;
-  final int? mainMultiplier;
-  final int? secondaryMultiplier;
+  final int? exactMultiplier;
+  final int? easyMultiplier;
   final String? imagePath;
   final int orderIndex;
   final bool isActive;
@@ -31,8 +31,8 @@ class Game extends Equatable {
         slug,
         name,
         type,
-        mainMultiplier,
-        secondaryMultiplier,
+        exactMultiplier,
+        easyMultiplier,
         imagePath,
         orderIndex,
         isActive,
