@@ -30,7 +30,10 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
       );
       await local.save(session);
-      tokenStore.set(session.accessToken);
+      tokenStore.setTokens(
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
+      );
       return Right(session);
     } on AccessBlockedException catch (e) {
       return Left(AccessBlockedFailure(e.message));
@@ -48,7 +51,10 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final session = await local.read();
       if (session != null) {
-        tokenStore.set(session.accessToken);
+        tokenStore.setTokens(
+          accessToken: session.accessToken,
+          refreshToken: session.refreshToken,
+        );
       }
       return Right(session);
     } catch (e) {

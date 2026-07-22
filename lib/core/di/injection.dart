@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/auth/data/datasources/auth_local_datasource.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
+import '../../features/auth/data/models/auth_session_model.dart';
+import '../../features/auth/data/models/authenticated_user_model.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecases/load_session.dart';
@@ -73,15 +75,32 @@ Future<void> configureDependencies() async {
   getIt.registerLazySingleton<TokenStore>(TokenStore.new);
   getIt.registerLazySingleton<SessionEvents>(SessionEvents.new);
 
+  // AuthLocalDatasource must be registered before DioClient because the
+  // interceptor's `onRefreshed` callback persists the rotated access token
+  // through it.
+  _registerAuthFeature();
+
   getIt.registerLazySingleton<DioClient>(
     () => DioClient(
       tokenStore: getIt(),
       logger: getIt(),
-      onUnauthorized: () => getIt<SessionEvents>().emitExpired(),
+      onRefreshed: (newAccessToken) async {
+        getIt<TokenStore>().updateAccessToken(newAccessToken);
+        // Rewrite the persisted session so a cold start after refresh
+        // doesn't fall back to the now-invalid old access token.
+        final existing = await getIt<AuthLocalDatasource>().read();
+        if (existing == null) return;
+        await getIt<AuthLocalDatasource>().save(
+          AuthSessionModel(
+            accessToken: newAccessToken,
+            refreshToken: existing.refreshToken,
+            user: existing.user as AuthenticatedUserModel,
+          ),
+        );
+      },
+      onSessionExpired: () => getIt<SessionEvents>().emitExpired(),
     ),
   );
-
-  _registerAuthFeature();
   _registerGamesFeature();
   _registerSalePointsFeature();
   _registerSchedulesFeature();

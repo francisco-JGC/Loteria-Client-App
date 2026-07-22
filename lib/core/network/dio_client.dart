@@ -8,8 +8,9 @@ import 'token_store.dart';
 class DioClient {
   DioClient({
     required TokenStore tokenStore,
+    required Future<void> Function(String newAccessToken) onRefreshed,
+    required void Function() onSessionExpired,
     Logger? logger,
-    void Function()? onUnauthorized,
   }) : _logger = logger ?? Logger() {
     _dio = Dio(
       BaseOptions(
@@ -22,7 +23,11 @@ class DioClient {
     );
 
     _dio.interceptors.add(
-      AuthInterceptor(tokenStore: tokenStore, onUnauthorized: onUnauthorized),
+      AuthInterceptor(
+        tokenStore: tokenStore,
+        onRefreshed: onRefreshed,
+        onSessionExpired: onSessionExpired,
+      ),
     );
 
     _dio.interceptors.add(
