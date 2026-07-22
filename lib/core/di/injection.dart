@@ -10,6 +10,9 @@ import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecases/load_session.dart';
 import '../../features/auth/domain/usecases/login.dart';
 import '../../features/auth/domain/usecases/logout.dart';
+import '../../features/game_prizes/data/datasources/game_prizes_remote_datasource.dart';
+import '../../features/game_prizes/data/repositories/game_prizes_repository_impl.dart';
+import '../../features/game_prizes/domain/repositories/game_prizes_repository.dart';
 import '../../features/games/data/datasources/games_local_datasource.dart';
 import '../../features/games/data/datasources/games_remote_datasource.dart';
 import '../../features/games/data/repositories/games_repository_impl.dart';
@@ -85,6 +88,7 @@ Future<void> configureDependencies() async {
   _registerTicketsFeature();
   _registerResultsFeature();
   _registerSaleLimitsFeature();
+  _registerGamePrizesFeature();
   _registerLuckyFeature();
   _registerSettingsFeature();
   _registerPrinterFeature();
@@ -185,6 +189,16 @@ void _registerSaleLimitsFeature() {
     )
     ..registerLazySingleton<SaleLimitsRepository>(
       () => SaleLimitsRepositoryImpl(remote: getIt()),
+    );
+}
+
+void _registerGamePrizesFeature() {
+  getIt
+    ..registerLazySingleton<GamePrizesRemoteDatasource>(
+      () => GamePrizesRemoteDatasourceImpl(client: getIt()),
+    )
+    ..registerLazySingleton<GamePrizesRepository>(
+      () => GamePrizesRepositoryImpl(remote: getIt()),
     );
 }
 

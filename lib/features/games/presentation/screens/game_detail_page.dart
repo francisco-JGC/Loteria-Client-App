@@ -5,6 +5,8 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/session/current_user.dart';
 import '../../../../core/utils/currency.dart';
 import '../../../../core/utils/time_format.dart';
+import '../../../game_prizes/domain/entities/effective_game_prize.dart';
+import '../../../game_prizes/presentation/state/effective_game_prizes_provider.dart';
 import '../../../printer/domain/entities/ticket_payload.dart';
 import '../../../printer/presentation/state/printer_controller.dart';
 import '../../../sale_limits/presentation/state/sale_limit_availability_provider.dart';
@@ -1307,20 +1309,37 @@ Future<void> _persistAndPrint(
     return;
   }
 
+  // Rescale line prizes if this sucursal has per-game overrides. We look
+  // up the effective multipliers, then for each line detect whether the
+  // caller used the "main" or "secondary" default and swap it for the
+  // override. Custom prizes matching neither default pass through unchanged.
+  final prizesAsync =
+      await ref.read(effectiveGamePrizesProvider(salePoint.id).future);
+  final prizeByGameId = <String, EffectiveGamePrize>{
+    for (final p in prizesAsync) p.gameId: p,
+  };
+
+  final requestLines = lines.map((l) {
+    // A ticket line's game_id is the parent game unless it's a sub-game
+    // line (multi-sorteo). Use whichever applies for the multiplier lookup.
+    final gameIdForLookup = l.subGameId ?? game.id;
+    final override = prizeByGameId[gameIdForLookup];
+    final prize = _rescalePrize(l.amount, l.prize, override);
+    return CreateTicketLine(
+      label: l.label,
+      amount: l.amount,
+      prize: prize,
+      subGameId: l.subGameId,
+      subGameName: l.subGameName,
+    );
+  }).toList();
+
   final request = CreateTicketRequest(
     gameId: game.id,
     salePointId: salePoint.id,
     client: client,
     drawAt: drawAt,
-    lines: lines
-        .map((l) => CreateTicketLine(
-              label: l.label,
-              amount: l.amount,
-              prize: l.prize,
-              subGameId: l.subGameId,
-              subGameName: l.subGameName,
-            ))
-        .toList(),
+    lines: requestLines,
   );
 
   final result = await getIt<CreateTicket>().call(request);
@@ -1454,6 +1473,26 @@ class _TotalBar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Detect whether the client-computed [existingPrize] used the game's
+/// `main` or `secondary` default and, if so, swap for the per-sucursal
+/// override. Prizes that don't match either default are returned as-is
+/// (some game types compute prize via non-linear rules we can't rescale).
+int _rescalePrize(int amount, int existingPrize, EffectiveGamePrize? o) {
+  if (o == null || amount <= 0) return existingPrize;
+  if (existingPrize % amount != 0) return existingPrize;
+  final implicit = existingPrize ~/ amount;
+
+  if (o.mainDefault != null && implicit == o.mainDefault) {
+    final target = o.mainMultiplier ?? o.mainDefault!;
+    return amount * target;
+  }
+  if (o.secondaryDefault != null && implicit == o.secondaryDefault) {
+    final target = o.secondaryMultiplier ?? o.secondaryDefault!;
+    return amount * target;
+  }
+  return existingPrize;
 }
 
 class _NotFound extends StatelessWidget {
