@@ -38,7 +38,7 @@ class _LoteriaClientAppState extends ConsumerState<LoteriaClientApp> {
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
-      title: 'Lotería',
+      title: 'LM NICA',
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.light,
