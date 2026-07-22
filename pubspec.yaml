@@ -58,3 +58,4 @@ flutter:
   assets:
     - .env
     - assets/images/games/
+    - assets/icon/app_icon.png

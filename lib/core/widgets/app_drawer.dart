@@ -20,6 +20,8 @@ class AppDrawer extends ConsumerWidget {
       child: SafeArea(
         child: Column(
           children: [
+            const _BrandHeader(),
+            const Divider(height: 1),
             _UserHeader(
               name: user?.name ?? '—',
               role: _roleLabel(user?.role),
@@ -58,6 +60,37 @@ class AppDrawer extends ConsumerWidget {
       case null:
         return '—';
     }
+  }
+}
+
+class _BrandHeader extends StatelessWidget {
+  const _BrandHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
+        children: [
+          Image.asset(
+            'assets/icon/app_icon.png',
+            width: 44,
+            height: 44,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(width: 12),
+          const Text(
+            'LM NICA',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.3,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

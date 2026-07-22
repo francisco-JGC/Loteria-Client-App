@@ -123,22 +123,18 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 84,
-          height: 84,
-          decoration: BoxDecoration(
-            color: scheme.primary.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(Icons.confirmation_number, size: 44, color: scheme.primary),
+        Image.asset(
+          'assets/icon/app_icon.png',
+          width: 110,
+          height: 110,
+          fit: BoxFit.contain,
         ),
         const SizedBox(height: 16),
         const Text(
-          'Lotería',
+          'LM NICA',
           style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
